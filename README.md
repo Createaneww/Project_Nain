@@ -2,7 +2,7 @@
 
 Explainable AI-powered diabetic retinopathy screening system for rural healthcare.
 
-## Team
+## Team 
 
 ### ML
 - Sakshi
