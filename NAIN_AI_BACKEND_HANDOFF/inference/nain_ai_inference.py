@@ -1,4 +1,4 @@
-
+# pyrefly: ignore [missing-import]
 import cv2
 import numpy as np
 import torch
@@ -15,6 +15,71 @@ CLASS_NAMES = [
     "Severe",
     "Proliferative"
 ]
+
+
+
+
+RETINAL_FEATURE_MAPPING = {
+    0: {
+        "stage": "No DR",
+        "features": [
+            "No characteristic DR lesions"
+        ]
+    },
+
+    1: {
+        "stage": "Mild NPDR",
+        "features": [
+            "Microaneurysms"
+        ]
+    },
+
+    2: {
+        "stage": "Moderate NPDR",
+        "features": [
+            "Exudates",
+            "Hemorrhages",
+            "Cotton Wool Spots"
+        ]
+    },
+
+    3: {
+        "stage": "Severe NPDR",
+        "features": [
+            "Hemorrhages",
+            "IRMA",
+            "Retinal Ischemia / Ghost Vessels"
+        ]
+    },
+
+    4: {
+        "stage": "Proliferative DR",
+        "features": [
+            "Neovascularization"
+        ]
+    }
+}
+
+print("Retinal feature mapping restored!")
+
+
+def retinal_analysis(predicted_class):
+
+    analysis = RETINAL_FEATURE_MAPPING.get(
+        predicted_class,
+        {
+            "stage": "Unknown",
+            "features": []
+        }
+    )
+
+    return {
+        "stage": analysis["stage"],
+        "features": analysis["features"]
+    }
+
+
+print("Retinal Analysis function ready!")
 
 
 def check_fundus_quality(image_path):
@@ -256,6 +321,10 @@ def nain_ai_inference(
 
     predicted_class = prediction.item()
 
+    retinal_result = retinal_analysis(
+        predicted_class
+    )
+
     targets = [
         ClassifierOutputTarget(
             predicted_class
@@ -291,6 +360,7 @@ def nain_ai_inference(
             )
             for i in range(5)
         },
+        "retinal_analysis": retinal_result,
         "heatmap": grayscale_cam,
         "overlay": visualization,
         "original_image": np.array(
