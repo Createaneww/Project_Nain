@@ -1,0 +1,9 @@
+torch
+torchvision
+opencv-python
+pillow
+numpy
+grad-cam
+django
+djangorestframework
+python-multipart
