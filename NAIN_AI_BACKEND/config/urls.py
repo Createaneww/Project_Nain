@@ -7,12 +7,14 @@ from django.conf import settings
 # pyrefly: ignore [missing-import]
 from django.conf.urls.static import static
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/patients/", include("patients.urls")),
     path("api/screenings/", include("screenings.urls")),
     path("api/reports/", include("reports.urls")),
+    path("api/referrals/", include("referrals.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(

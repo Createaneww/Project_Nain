@@ -21,6 +21,7 @@ from rest_framework import status
 
 
 from reports.serializers import ReportSerializer
+from referrals.models import Referral
 
 
 class ScreeningListCreateView(generics.ListCreateAPIView):
@@ -141,6 +142,9 @@ class ScreeningAnalyzeView(APIView):
                     "original_image_url": ml_result.get("original_image_url"),
                     "gradcam_url": ml_result.get("gradcam_url"),
                 }
+            )
+            Referral.objects.get_or_create(
+                report=report
             )
 
             return Response(

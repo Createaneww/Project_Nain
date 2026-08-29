@@ -15,5 +15,10 @@ class User(AbstractUser):
         default=Role.HEALTH_WORKER
     )
 
+    @property
+    def full_name(self):
+        full = self.get_full_name()
+        return full.strip() if full else self.username
+
     def __str__(self):
-        return f"{self.username} - {self.role}"
+        return f"{self.username} - {self.role}"
