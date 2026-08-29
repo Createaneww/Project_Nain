@@ -6,6 +6,8 @@ from rest_framework import generics
 # pyrefly: ignore [missing-import]
 from rest_framework.permissions import IsAuthenticated
 
+from reports.models import Report
+
 from .models import Screening
 from .serializers import ScreeningSerializer
 from accounts.permissions import HasRole
@@ -16,6 +18,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # pyrefly: ignore [missing-import]
 from rest_framework import status
+
+
+from reports.serializers import ReportSerializer
 
 
 class ScreeningListCreateView(generics.ListCreateAPIView):
@@ -125,10 +130,24 @@ class ScreeningAnalyzeView(APIView):
 
             screening.save()
 
+            report, created = Report.objects.update_or_create(
+                screening=screening,
+                defaults={
+                    "prediction": ml_result.get("prediction"),
+                    "confidence": ml_result.get("confidence"),
+                    "quality_data": ml_result.get("quality"),
+                    "probabilities": ml_result.get("probabilities"),
+                    "retinal_analysis": ml_result.get("retinal_analysis"),
+                    "original_image_url": ml_result.get("original_image_url"),
+                    "gradcam_url": ml_result.get("gradcam_url"),
+                }
+            )
+
             return Response(
                 {
                     "detail": "Image analyzed successfully.",
                     "screening_id": screening.id,
+                    "report_id": report.id,
                     "status": screening.status,
                     "ml_result": ml_result,
                 },
@@ -147,3 +166,29 @@ class ScreeningAnalyzeView(APIView):
                 },
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
+    
+class ScreeningReportView(APIView):
+    permission_classes = [IsAuthenticated, HasRole]
+    allowed_roles = ["HEALTH_WORKER"]
+
+    def get(self, request, pk):
+        try:
+            screening = Screening.objects.get(pk=pk)
+        except Screening.DoesNotExist:
+            return Response(
+                {"detail": "Screening not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            report = screening.report
+        except Report.DoesNotExist:
+            return Response(
+                {"detail": "Report not available for this screening yet."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            ReportSerializer(report).data,
+            status=status.HTTP_200_OK
+        )

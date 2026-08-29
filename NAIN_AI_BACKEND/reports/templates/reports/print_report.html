@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retinal Screening Diagnostic Report #{{ report.id }} - {{ patient.full_name }}</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --primary-bg: #eff6ff;
+            --secondary: #0f766e;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+            --bg-card: #f8fafc;
+            --danger: #dc2626;
+            --danger-bg: #fef2f2;
+            --warning: #d97706;
+            --warning-bg: #fffbeb;
+            --success: #16a34a;
+            --success-bg: #f0fdf4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-dark);
+            background-color: #f1f5f9;
+            line-height: 1.5;
+            padding: 24px 16px;
+        }
+
+        .report-page {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            padding: 36px 40px;
+            border: 1px solid var(--border-light);
+        }
+
+        /* Action bar for screen */
+        .actions-bar {
+            max-width: 900px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-print {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-print:hover {
+            background-color: #1d4ed8;
+        }
+
+        .report-badge-top {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            background: #e2e8f0;
+            color: #475569;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .report-meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .report-meta strong {
+            color: var(--text-dark);
+            font-size: 13px;
+        }
+
+        /* Section Headings */
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 6px;
+            margin-top: 22px;
+            margin-bottom: 12px;
+        }
+
+        /* Two Column Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 14px 16px;
+        }
+
+        .info-card h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: right;
+        }
+
+        /* Primary Diagnostic Result Banner */
+        .diagnostic-banner {
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+
+        .diagnostic-banner.status-danger {
+            background-color: var(--danger-bg);
+            border-color: #fca5a5;
+        }
+
+        .diagnostic-banner.status-warning {
+            background-color: var(--warning-bg);
+            border-color: #fcd34d;
+        }
+
+        .diagnostic-banner.status-success {
+            background-color: var(--success-bg);
+            border-color: #86efac;
+        }
+
+        .diagnostic-banner.status-default {
+            background-color: var(--primary-bg);
+            border-color: #bfdbfe;
+        }
+
+        .prediction-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .prediction-value {
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .confidence-box {
+            text-align: right;
+        }
+
+        .confidence-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* Probabilities & Quality */
+        .prob-bar-container {
+            margin-top: 8px;
+        }
+
+        .prob-item {
+            margin-bottom: 8px;
+        }
+
+        .prob-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .prob-bar-bg {
+            background-color: #e2e8f0;
+            height: 7px;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            background: linear-gradient(90deg, var(--primary-light), var(--primary));
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .quality-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .quality-badge.good {
+            background-color: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #86efac;
+        }
+
+        .quality-badge.poor {
+            background-color: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #fca5a5;
+        }
+
+        /* Retinal Analysis details */
+        .analysis-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 14px 16px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .analysis-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .analysis-tag {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        /* Images Grid */
+        .images-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+            margin-bottom: 16px;
+        }
+
+        .image-card {
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000000;
+            text-align: center;
+        }
+
+        .image-header {
+            background: #ffffff;
+            color: var(--text-dark);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-light);
+            text-align: left;
+        }
+
+        .image-card img {
+            max-width: 100%;
+            height: 220px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .image-placeholder {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 12px;
+            background: #f8fafc;
+        }
+
+        /* Disclaimer and Sign-off */
+        .disclaimer {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-light);
+            padding-top: 12px;
+            margin-top: 24px;
+            line-height: 1.4;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 36px;
+            padding-top: 12px;
+        }
+
+        .sig-block {
+            width: 200px;
+            border-top: 1px solid var(--text-muted);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding-top: 4px;
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body {
+                background: #ffffff;
+                padding: 0;
+                color: #000000;
+            }
+
+            .actions-bar {
+                display: none !important;
+            }
+
+            .report-page {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .info-card, .analysis-box, .image-card {
+                break-inside: avoid;
+            }
+
+            .images-grid {
+                break-inside: avoid;
+            }
+
+            .diagnostic-banner {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .prob-bar-fill {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Screen Navigation / Print Action Bar -->
+    <div class="actions-bar">
+        <span class="report-badge-top">Medical Diagnostic Report &bull; #{{ report.id }}</span>
+        <button class="btn-print" onclick="window.print()">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            Print Report
+        </button>
+    </div>
+
+    <!-- Printable Report Sheet -->
+    <div class="report-page">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <div class="brand-title">NAIN AI RETINAL SCREENING</div>
+                <div class="brand-subtitle">AI-Assisted Diabetic Retinopathy Diagnostic Evaluation</div>
+            </div>
+            <div class="report-meta">
+                <div><strong>Report ID:</strong> #{{ report.id }}</div>
+                <div><strong>Screening ID:</strong> #{{ screening.id }}</div>
+                <div><strong>Generated:</strong> {{ report.generated_at|date:"d M Y, H:i e" }}</div>
+            </div>
+        </div>
+
+        <!-- Diagnostic Prediction Banner -->
+        <div class="diagnostic-banner {{ banner_class }}">
+            <div>
+                <div class="prediction-title">AI Diagnostic Finding</div>
+                <div class="prediction-value">{{ report.prediction|default:"N/A" }}</div>
+            </div>
+            <div class="confidence-box">
+                <div class="prediction-title">Model Confidence</div>
+                <div class="confidence-value">{{ formatted_confidence }}</div>
+            </div>
+        </div>
+
+        <!-- Patient and Screening Information Grid -->
+        <div class="grid-2">
+            <div class="info-card">
+                <h4>Patient Information</h4>
+                <div class="info-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">{{ patient.full_name|default:"N/A" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Age / Gender</span>
+                    <span class="info-value">{% if patient.age %}{{ patient.age }} yrs{% else %}-{% endif %} / {{ patient.get_gender_display|default:patient.gender|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Patient ID</span>
+                    <span class="info-value">#{{ patient.id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Contact</span>
+                    <span class="info-value">{{ patient.phone_number|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Address</span>
+                    <span class="info-value">{{ patient.address|default:"-" }}</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h4>Screening & Examination</h4>
+                <div class="info-row">
+                    <span class="info-label">Screening Date</span>
+                    <span class="info-value">{{ screening.created_at|date:"d M Y, H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Screening Status</span>
+                    <span class="info-value">{{ screening.get_status_display|default:screening.status }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Screened By</span>
+                    <span class="info-value">
+                        {% if screening.created_by %}
+                            {{ screening.created_by.get_full_name|default:screening.created_by.username }} ({{ screening.created_by.role }})
+                        {% else %}
+                            Healthcare Staff
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Quality Status</span>
+                    <span class="info-value">
+                        {% if quality_data and quality_data.overall %}
+                            <span class="quality-badge {% if quality_data.overall == 'GOOD' %}good{% else %}poor{% endif %}">
+                                {{ quality_data.overall }}
+                            </span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Passed Checks</span>
+                    <span class="info-value">
+                        {% if quality_data and quality_data.passed_checks is not None %}
+                            {{ quality_data.passed_checks }} / 7
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Probabilities and Quality Summary Grid -->
+        <div class="grid-2">
+            <!-- Probabilities -->
+            <div class="info-card">
+                <h4>Multiclass Probability Distribution</h4>
+                {% if probabilities_list %}
+                    <div class="prob-bar-container">
+                        {% for item in probabilities_list %}
+                        <div class="prob-item">
+                            <div class="prob-header">
+                                <span>{{ item.label }}</span>
+                                <span>{{ item.percent }}</span>
+                            </div>
+                            <div class="prob-bar-bg">
+                                <div class="prob-bar-fill" style="width: {{ item.bar_width }};"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="font-size: 12px; color: var(--text-muted);">No detailed class probabilities recorded.</p>
+                {% endif %}
+            </div>
+
+            <!-- Image Quality Summary -->
+            <div class="info-card">
+                <h4>Image Quality Assessment</h4>
+                {% if quality_metrics %}
+                    {% for q in quality_metrics %}
+                    <div class="info-row">
+                        <span class="info-label">{{ q.name }}</span>
+                        <span class="info-value">{{ q.value }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="font-size: 12px; color: var(--text-muted);">No image quality metrics recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Retinal Analysis Findings -->
+        <div class="section-title">Retinal Clinical Analysis</div>
+        <div class="analysis-box">
+            <div class="info-row">
+                <span class="info-label">Analyzed Stage</span>
+                <span class="info-value">{{ retinal_stage|default:report.prediction|default:"N/A" }}</span>
+            </div>
+            <div style="margin-top: 8px;">
+                <span class="info-label">Observed Features & Biomarkers:</span>
+                <div class="analysis-tags">
+                    {% if retinal_features %}
+                        {% for feature in retinal_features %}
+                            <span class="analysis-tag">&bull; {{ feature }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="analysis-tag">No specific micro-features reported</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Images Section -->
+        <div class="section-title">Visual Evidence & Heatmap Overlay</div>
+        <div class="images-grid">
+            <div class="image-card">
+                <div class="image-header">Original Retinal Fundus Photograph</div>
+                {% if resolved_original_image_url %}
+                    <img src="{{ resolved_original_image_url }}" alt="Original Retinal Fundus">
+                {% else %}
+                    <div class="image-placeholder">Original image not available</div>
+                {% endif %}
+            </div>
+
+            <div class="image-card">
+                <div class="image-header">Grad-CAM Model Attention Map</div>
+                {% if resolved_gradcam_url %}
+                    <img src="{{ resolved_gradcam_url }}" alt="Grad-CAM Attention Map">
+                {% else %}
+                    <div class="image-placeholder">Grad-CAM visualization not available</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Disclaimer & Medical Sign-off -->
+        <div class="disclaimer">
+            <strong>Clinical Decision Support Disclaimer:</strong> This report is generated by the NAIN AI Retinal Screening System. Findings and probabilities provided are intended solely to assist licensed healthcare providers in clinical evaluation and should not be used as an independent substitute for comprehensive ophthalmic diagnosis.
+        </div>
+
+        <div class="signature-section">
+            <div class="sig-block">
+                Screening Operator Signature
+            </div>
+            <div class="sig-block">
+                Reviewing Ophthalmologist / Doctor
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

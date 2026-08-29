@@ -12,6 +12,7 @@ urlpatterns = [
     path("api/auth/", include("accounts.urls")),
     path("api/patients/", include("patients.urls")),
     path("api/screenings/", include("screenings.urls")),
+    path("api/reports/", include("reports.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(
