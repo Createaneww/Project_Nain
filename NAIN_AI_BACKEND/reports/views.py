@@ -14,6 +14,21 @@ from .models import Report
 from .serializers import ReportSerializer
 
 
+class ReportListView(generics.ListAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Report.objects.select_related(
+            "screening",
+            "screening__patient"
+        ).order_by("-generated_at")
+        prediction = self.request.query_params.get("prediction")
+        if prediction:
+            queryset = queryset.filter(prediction__iexact=prediction.strip())
+        return queryset
+
+
 class ReportDetailView(generics.RetrieveAPIView):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer

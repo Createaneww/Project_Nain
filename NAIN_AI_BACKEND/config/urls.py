@@ -11,10 +11,12 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
+    path("api/admin/", include("accounts.admin_urls")),
     path("api/patients/", include("patients.urls")),
     path("api/screenings/", include("screenings.urls")),
     path("api/reports/", include("reports.urls")),
     path("api/referrals/", include("referrals.urls")),
+    path("api/dashboard/", include("dashboard.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(

@@ -31,7 +31,28 @@ class ScreeningListCreateView(generics.ListCreateAPIView):
     allowed_roles = ["HEALTH_WORKER"]
 
     def get_queryset(self):
-        return Screening.objects.all().order_by("-created_at")
+        queryset = Screening.objects.all().order_by("-created_at")
+        patient_id = self.request.query_params.get("patient_id")
+        created_by = self.request.query_params.get("created_by")
+        date = self.request.query_params.get("date")
+
+        if patient_id:
+            try:
+                queryset = queryset.filter(patient_id=int(patient_id))
+            except (ValueError, TypeError):
+                queryset = queryset.none()
+        if created_by:
+            try:
+                queryset = queryset.filter(created_by_id=int(created_by))
+            except (ValueError, TypeError):
+                queryset = queryset.none()
+        if date:
+            try:
+                queryset = queryset.filter(created_at__date=date.strip())
+            except Exception:
+                queryset = queryset.none()
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

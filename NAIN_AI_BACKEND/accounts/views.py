@@ -1,7 +1,11 @@
+# pyrefly: ignore [missing-import]
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .models import User
 from .permissions import HasRole
+from .serializers import AdminUserSerializer
 
 
 class MeView(APIView):
@@ -19,6 +23,7 @@ class MeView(APIView):
             "role": user.role,
         })
 
+
 class HealthWorkerTestView(APIView):
     permission_classes = [HasRole]
     allowed_roles = ["HEALTH_WORKER"]
@@ -28,3 +33,18 @@ class HealthWorkerTestView(APIView):
             "message": "Health Worker access granted.",
             "role": request.user.role,
         })
+
+
+class AdminUserListCreateView(generics.ListCreateAPIView):
+    queryset = User.objects.all().order_by("id")
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAuthenticated, HasRole]
+    allowed_roles = ["ADMIN"]
+
+
+class AdminUserDetailView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAuthenticated, HasRole]
+    allowed_roles = ["ADMIN"]
+    http_method_names = ["get", "patch", "head", "options"]

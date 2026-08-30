@@ -1,4 +1,6 @@
 # pyrefly: ignore [missing-import]
+from django.db.models import Q
+# pyrefly: ignore [missing-import]
 from rest_framework import generics
 # pyrefly: ignore [missing-import]
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +16,16 @@ class PatientListCreateView(generics.ListCreateAPIView):
     allowed_roles = ["HEALTH_WORKER", "ADMIN"]
 
     def get_queryset(self):
-        return Patient.objects.all().order_by("-created_at")
+        queryset = Patient.objects.all().order_by("-created_at")
+        search = self.request.query_params.get("search")
+        if search:
+            search = search.strip()
+            queryset = queryset.filter(
+                Q(full_name__icontains=search)
+                | Q(phone_number__icontains=search)
+                | Q(email__icontains=search)
+            )
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

@@ -22,13 +22,32 @@ class ReferralListView(generics.ListAPIView):
     allowed_roles = ["ADMIN"]
 
     def get_queryset(self):
-        return Referral.objects.select_related(
+        queryset = Referral.objects.select_related(
             "report",
             "report__screening",
             "report__screening__patient",
             "assigned_doctor",
             "collected_by",
         ).order_by("-created_at")
+
+        status_param = self.request.query_params.get("status")
+        doctor_id = self.request.query_params.get("doctor_id")
+        patient_id = self.request.query_params.get("patient_id")
+
+        if status_param:
+            queryset = queryset.filter(status__iexact=status_param.strip())
+        if doctor_id:
+            try:
+                queryset = queryset.filter(assigned_doctor_id=int(doctor_id))
+            except (ValueError, TypeError):
+                queryset = queryset.none()
+        if patient_id:
+            try:
+                queryset = queryset.filter(report__screening__patient_id=int(patient_id))
+            except (ValueError, TypeError):
+                queryset = queryset.none()
+
+        return queryset
 
 
 class ReferralDetailView(generics.RetrieveAPIView):
@@ -187,4 +206,4 @@ class ReferralCollectView(APIView):
             status=status.HTTP_200_OK
         )
 
-
+
