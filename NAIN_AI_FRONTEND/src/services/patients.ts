@@ -25,6 +25,18 @@ export interface CreatePatientPayload {
   address?: string;
 }
 
+export interface ScreeningSummary {
+  id: number;
+  patient: number;
+  patient_name: string;
+  fundus_image: string | null;
+  status: string;
+  created_by?: number;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function fetchPatients(search?: string): Promise<Patient[]> {
   const token = getAccessToken();
   if (!token) {
@@ -65,6 +77,70 @@ export async function fetchPatients(search?: string): Promise<Patient[]> {
   }
 
   return response.json();
+}
+
+export async function fetchPatientById(id: string | number): Promise<Patient> {
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error("Authentication token not found. Please log in again.");
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/patients/${id}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    throw new Error(
+      "Network error: Unable to connect to backend server. Please verify backend is running."
+    );
+  }
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("Patient not found.");
+    }
+    const errorData = await response.json().catch(() => null);
+    const errorMessage =
+      errorData?.detail ||
+      errorData?.message ||
+      (response.status === 401
+        ? "Session expired. Please log in again."
+        : response.status === 403
+        ? "Access forbidden. Health Worker role required."
+        : "Failed to fetch patient details.");
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+export async function fetchPatientScreenings(
+  patientId: string | number
+): Promise<ScreeningSummary[]> {
+  const token = getAccessToken();
+  if (!token) return [];
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/screenings/?patient_id=${patientId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function createPatient(

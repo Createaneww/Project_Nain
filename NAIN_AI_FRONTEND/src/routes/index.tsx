@@ -7,6 +7,7 @@ import HealthWorkerPatientsPage from "../app/health-worker/patients/page";
 import HealthWorkerNewPatientPage from "../app/health-worker/patients/new/page";
 import HealthWorkerPatientDetailPage from "../app/health-worker/patients/[id]/page";
 import HealthWorkerScreeningsPage from "../app/health-worker/screenings/page";
+import HealthWorkerNewScreeningPage from "../app/health-worker/screenings/new/page";
 import HealthWorkerReferralsPage from "../app/health-worker/referrals/page";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -76,6 +77,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
               <HealthWorkerScreeningsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/health-worker/screenings/new"
+          element={
+            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
+              <HealthWorkerNewScreeningPage />
             </ProtectedRoute>
           }
         />
