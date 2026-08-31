@@ -1,7 +1,10 @@
 # pyrefly: ignore [missing-import]
 from rest_framework import generics
+# pyrefly: ignore [missing-import]
 from rest_framework.permissions import IsAuthenticated
+# pyrefly: ignore [missing-import]
 from rest_framework.response import Response
+# pyrefly: ignore [missing-import]
 from rest_framework.views import APIView
 from .models import User
 from .permissions import HasRole
@@ -35,6 +38,7 @@ class HealthWorkerTestView(APIView):
         })
 
 
+# pyrefly: ignore [missing-import]
 from django.db.models import Q
 
 
@@ -157,6 +161,7 @@ class DoctorListView(APIView):
         return Response(doctor_list)
 
 
+# pyrefly: ignore [missing-import]
 from django.utils import timezone
 from datetime import timedelta
 from .models import ActivityLog
@@ -273,4 +278,4 @@ class NotificationMarkAllReadView(APIView):
 
         return Response({"updated_count": updated_count, "message": "All notifications marked as read."})
 
-
+

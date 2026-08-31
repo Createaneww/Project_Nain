@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser
+# pyrefly: ignore [missing-import]
 from django.db import models
 
 
@@ -96,4 +98,4 @@ class Notification(models.Model):
     def __str__(self):
         return f"[{self.type}] to {self.recipient.username}: {self.title} (Read: {self.is_read})"
 
-
+
