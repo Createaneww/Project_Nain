@@ -17,6 +17,7 @@ urlpatterns = [
     path("api/reports/", include("reports.urls")),
     path("api/referrals/", include("referrals.urls")),
     path("api/dashboard/", include("dashboard.urls")),
+    path("api/notifications/", include("accounts.notification_urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(

@@ -5,6 +5,7 @@ import {
   fetchHealthWorkerDashboard,
   type HealthWorkerDashboardData,
 } from "../../../services/dashboard";
+import NotificationBell from "../../../components/NotificationBell";
 
 function HealthWorkerDashboardPage() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ function HealthWorkerDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell role="HEALTH_WORKER" />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-slate-800">{displayName}</p>
               <p className="text-xs text-slate-500">Field Health Worker</p>

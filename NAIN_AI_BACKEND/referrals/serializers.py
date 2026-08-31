@@ -41,6 +41,12 @@ class ReferralSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
+    collected_by_role = serializers.CharField(
+        source="collected_by.role",
+        read_only=True,
+        allow_null=True
+    )
+
     class Meta:
         model = Referral
         fields = [
@@ -58,6 +64,7 @@ class ReferralSerializer(serializers.ModelSerializer):
             "collected_at",
             "collected_by",
             "collected_by_name",
+            "collected_by_role",
             "created_at",
             "updated_at",
         ]
@@ -71,6 +78,7 @@ class ReferralSerializer(serializers.ModelSerializer):
             "prediction",
             "assigned_doctor_name",
             "collected_by_name",
+            "collected_by_role",
             "status",
             "doctor_notes",
             "reviewed_at",

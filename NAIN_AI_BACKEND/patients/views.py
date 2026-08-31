@@ -28,7 +28,18 @@ class PatientListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        patient = serializer.save(created_by=self.request.user)
+        from accounts.activity import log_activity
+        log_activity(
+            event_type="PATIENT_CREATED",
+            category="PATIENT",
+            details=f"Patient {patient.full_name} registered successfully.",
+            actor=self.request.user,
+            entity_type="Patient",
+            entity_id=patient.id,
+            patient_id=patient.id,
+            patient_name=patient.full_name,
+        )
 
 
 class PatientDetailView(generics.RetrieveUpdateAPIView):
@@ -36,4 +47,19 @@ class PatientDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated, HasRole]
     allowed_roles = ["HEALTH_WORKER", "ADMIN"]
-    http_method_names = ["get", "patch", "head", "options"]
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def perform_update(self, serializer):
+        patient = serializer.save()
+        from accounts.activity import log_activity
+        log_activity(
+            event_type="PATIENT_UPDATED",
+            category="PATIENT",
+            details=f"Patient {patient.full_name} profile updated.",
+            actor=self.request.user,
+            entity_type="Patient",
+            entity_id=patient.id,
+            patient_id=patient.id,
+            patient_name=patient.full_name,
+        )
+

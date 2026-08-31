@@ -28,7 +28,7 @@ class ScreeningListCreateView(generics.ListCreateAPIView):
     serializer_class = ScreeningSerializer
     permission_classes = [IsAuthenticated, HasRole]
 
-    allowed_roles = ["HEALTH_WORKER"]
+    allowed_roles = ["HEALTH_WORKER", "ADMIN"]
 
     def get_queryset(self):
         queryset = Screening.objects.all().order_by("-created_at")
@@ -55,14 +55,26 @@ class ScreeningListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        screening = serializer.save(created_by=self.request.user)
+        from accounts.activity import log_activity
+        patient_name = screening.patient.full_name if screening.patient else ""
+        log_activity(
+            event_type="SCREENING_CREATED",
+            category="SCREENING",
+            details=f"Screening session #{screening.id} initiated for patient {patient_name}.",
+            actor=self.request.user,
+            entity_type="Screening",
+            entity_id=screening.id,
+            patient_id=screening.patient.id if screening.patient else None,
+            patient_name=patient_name,
+        )
 
 class ScreeningDetailView(generics.RetrieveAPIView):
     queryset = Screening.objects.all()
     serializer_class = ScreeningSerializer
     permission_classes = [IsAuthenticated, HasRole]
 
-    allowed_roles = ["HEALTH_WORKER"]
+    allowed_roles = ["HEALTH_WORKER", "ADMIN"]
 
 class ScreeningImageUploadView(APIView):
     permission_classes = [IsAuthenticated, HasRole]
@@ -86,6 +98,19 @@ class ScreeningImageUploadView(APIView):
         screening.fundus_image = request.FILES["fundus_image"]
         screening.status = "IMAGE_UPLOADED"
         screening.save()
+
+        from accounts.activity import log_activity
+        patient_name = screening.patient.full_name if screening.patient else ""
+        log_activity(
+            event_type="IMAGE_UPLOADED",
+            category="SCREENING",
+            details=f"Retinal fundus image uploaded for screening #{screening.id}.",
+            actor=request.user,
+            entity_type="Screening",
+            entity_id=screening.id,
+            patient_id=screening.patient.id if screening.patient else None,
+            patient_name=patient_name,
+        )
 
         return Response(
             ScreeningSerializer(screening).data,
@@ -164,9 +189,42 @@ class ScreeningAnalyzeView(APIView):
                     "gradcam_url": ml_result.get("gradcam_url"),
                 }
             )
-            Referral.objects.get_or_create(
+            referral, ref_created = Referral.objects.get_or_create(
                 report=report
             )
+
+            from accounts.activity import log_activity
+            patient_name = screening.patient.full_name if screening.patient else ""
+            log_activity(
+                event_type="AI_ANALYSIS_COMPLETED",
+                category="AI_ANALYSIS",
+                details=f"AI diagnostic inference completed: {screening.prediction} (Confidence: {int(screening.confidence * 100 if screening.confidence else 0)}%).",
+                actor=request.user,
+                entity_type="Report",
+                entity_id=report.id,
+                patient_id=screening.patient.id if screening.patient else None,
+                patient_name=patient_name,
+            )
+            if ref_created:
+                log_activity(
+                    event_type="REFERRAL_CREATED",
+                    category="REFERRAL",
+                    details=f"Specialist referral #{referral.id} created for patient {patient_name}.",
+                    actor=request.user,
+                    entity_type="Referral",
+                    entity_id=referral.id,
+                    patient_id=screening.patient.id if screening.patient else None,
+                    patient_name=patient_name,
+                )
+                from accounts.notifications import notify_admins
+                notify_admins(
+                    type="REFERRAL_PENDING",
+                    title="New Referral Pending",
+                    message=f"A new referral for {patient_name or f'Patient #{screening.patient_id}'} requires assignment.",
+                    related_entity_type="Referral",
+                    related_entity_id=referral.id,
+                    action_url=f"/admin/referrals/{referral.id}",
+                )
 
             return Response(
                 {
@@ -194,7 +252,7 @@ class ScreeningAnalyzeView(APIView):
     
 class ScreeningReportView(APIView):
     permission_classes = [IsAuthenticated, HasRole]
-    allowed_roles = ["HEALTH_WORKER"]
+    allowed_roles = ["HEALTH_WORKER", "ADMIN", "DOCTOR"]
 
     def get(self, request, pk):
         try:

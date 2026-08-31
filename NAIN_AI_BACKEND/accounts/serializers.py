@@ -1,6 +1,5 @@
-# pyrefly: ignore [missing-import]
 from rest_framework import serializers
-from .models import User
+from .models import User, ActivityLog, Notification
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -13,6 +12,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
         required=False,
         allow_blank=True
     )
+    specialization = serializers.SerializerMethodField()
+
+    def get_specialization(self, obj):
+        if obj.role == User.Role.DOCTOR:
+            return "Ophthalmologist"
+        return "—"
 
     class Meta:
         model = User
@@ -24,12 +29,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
             "role",
+            "specialization",
             "is_active",
             "date_joined",
             "password",
         ]
         read_only_fields = [
             "id",
+            "specialization",
             "date_joined",
         ]
         extra_kwargs = {
@@ -81,3 +88,52 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityLog
+        fields = [
+            "id",
+            "event_type",
+            "category",
+            "actor_name",
+            "actor_role",
+            "entity_type",
+            "entity_id",
+            "patient_id",
+            "patient_name",
+            "details",
+            "metadata",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "type",
+            "title",
+            "message",
+            "is_read",
+            "related_entity_type",
+            "related_entity_id",
+            "action_url",
+            "created_at",
+            "read_at",
+        ]
+        read_only_fields = [
+            "id",
+            "type",
+            "title",
+            "message",
+            "related_entity_type",
+            "related_entity_id",
+            "action_url",
+            "created_at",
+        ]
+
+
