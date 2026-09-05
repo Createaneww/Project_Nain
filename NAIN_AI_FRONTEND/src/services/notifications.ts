@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -25,11 +25,6 @@ export interface AppNotification {
 export async function fetchNotifications(params?: {
   is_read?: boolean;
 }): Promise<AppNotification[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const url = new URL(`${API_BASE_URL}/api/notifications/`);
   if (params?.is_read !== undefined) {
     url.searchParams.set("is_read", String(params.is_read));
@@ -37,14 +32,14 @@ export async function fetchNotifications(params?: {
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await authenticatedFetch(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -65,17 +60,13 @@ export async function fetchNotifications(params?: {
 }
 
 export async function fetchUnreadNotificationCount(): Promise<number> {
-  const token = getAccessToken();
-  if (!token) return 0;
-
   try {
-    const response = await fetch(
+    const response = await authenticatedFetch(
       `${API_BASE_URL}/api/notifications/unread-count/`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -91,21 +82,16 @@ export async function fetchUnreadNotificationCount(): Promise<number> {
 export async function markNotificationAsRead(
   id: number | string
 ): Promise<AppNotification> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/notifications/${id}/read/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/notifications/${id}/read/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error("Network error: Unable to update notification.");
   }
 
@@ -118,21 +104,16 @@ export async function markNotificationAsRead(
 }
 
 export async function markAllNotificationsAsRead(): Promise<number> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/notifications/read-all/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/notifications/read-all/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error("Network error: Unable to update notifications.");
   }
 

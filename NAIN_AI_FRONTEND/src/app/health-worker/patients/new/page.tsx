@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
 import { createPatient } from "../../../../services/patients";
 
 interface FormErrors {
@@ -12,7 +11,6 @@ interface FormErrors {
 
 function HealthWorkerNewPatientPage() {
   const navigate = useNavigate();
-  const storedUser = getStoredUser();
 
   // Form input state
   const [fullName, setFullName] = useState("");
@@ -27,11 +25,6 @@ function HealthWorkerNewPatientPage() {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -89,7 +82,7 @@ function HealthWorkerNewPatientPage() {
         address: address.trim() || undefined,
       });
 
-      setSuccessMessage("Patient created successfully! Redirecting...");
+      setSuccessMessage("Patient created successfully! Redirecting to patients list...");
 
       // Redirect to patients list
       setTimeout(() => {
@@ -107,359 +100,306 @@ function HealthWorkerNewPatientPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/health-worker/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-100">
-                  Health Worker
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/health-worker/patients"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Patients
-            </Link>
-            {storedUser && (
-              <span className="hidden md:inline-block text-xs font-medium text-slate-500 border-l border-slate-200 pl-3">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb & Header */}
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
-          <nav className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-            <Link
-              to="/health-worker/dashboard"
-              className="hover:text-blue-600 transition"
-            >
-              Dashboard
-            </Link>
-            <span>/</span>
-            <Link
-              to="/health-worker/patients"
-              className="hover:text-blue-600 transition"
-            >
-              Patients
-            </Link>
-            <span>/</span>
-            <span className="text-slate-800 font-medium">Add New Patient</span>
-          </nav>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-                Add New Patient
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                Register a new patient for diabetic retinopathy screening.
-              </p>
-            </div>
-            <Link
-              to="/health-worker/patients"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition"
-            >
-              ← Back to Patients
-            </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#3F54DA] tracking-wider uppercase">
+              Registration Intake
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span className="text-xs text-slate-500 font-medium">
+              New Medical Record
+            </span>
           </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0F1F5C] tracking-tight mt-1">
+            Add New Patient
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Register a new patient into the clinical directory for diabetic retinopathy screening.
+          </p>
         </div>
 
-        {/* Success Alert */}
-        {successMessage && (
-          <div
-            className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm flex items-center gap-3"
-            role="status"
-          >
-            <span className="text-lg">✅</span>
-            <span className="font-semibold">{successMessage}</span>
-          </div>
-        )}
+        <Link
+          to="/health-worker/patients"
+          className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 shrink-0"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to Patients</span>
+        </Link>
+      </div>
 
-        {/* Error Alert */}
-        {apiError && (
-          <div
-            className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm flex items-start gap-3"
-            role="alert"
-          >
-            <span className="text-lg">⚠️</span>
-            <div>
-              <p className="font-semibold text-red-900">
-                Failed to create patient
-              </p>
-              <p className="mt-0.5 text-xs text-red-700">{apiError}</p>
-            </div>
-          </div>
-        )}
+      {/* Success Alert */}
+      {successMessage && (
+        <div
+          className="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-sm text-emerald-800 shadow-sm flex items-center gap-3"
+          role="status"
+        >
+          <svg className="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="font-semibold text-emerald-900">{successMessage}</span>
+        </div>
+      )}
 
-        {/* Patient Form Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-          <div className="border-b border-slate-100 pb-4 mb-6">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Patient Information
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Please enter the clinical identification details below. Fields marked with <span className="text-red-500 font-semibold">*</span> are required.
+      {/* Error Alert */}
+      {apiError && (
+        <div
+          className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800 shadow-sm flex items-start gap-3"
+          role="alert"
+        >
+          <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="font-bold text-rose-900">
+              Failed to create patient record
             </p>
+            <p className="mt-0.5 text-xs text-rose-700">{apiError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Patient Form Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+        <div className="border-b border-slate-100 pb-4 mb-6">
+          <h3 className="text-base font-bold text-[#0F1F5C]">
+            Patient Identification & Demographics
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Fields marked with <span className="text-rose-500 font-semibold">*</span> are required for clinical identification.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          {/* Full Name */}
+          <div>
+            <label
+              htmlFor="fullName"
+              className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+            >
+              Full Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                if (errors.full_name) {
+                  setErrors((prev) => ({ ...prev, full_name: undefined }));
+                }
+              }}
+              placeholder="e.g. Ramesh Kumar"
+              disabled={submitting}
+              className={`w-full rounded-xl border px-4 py-2.5 text-xs sm:text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
+                errors.full_name
+                  ? "border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                  : "border-slate-200 bg-slate-50 focus:bg-white focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10"
+              }`}
+            />
+            {errors.full_name && (
+              <p className="mt-1.5 text-xs text-rose-600 font-semibold">
+                {errors.full_name}
+              </p>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-            {/* Full Name */}
+          {/* Age & Gender Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Age */}
             <div>
               <label
-                htmlFor="fullName"
-                className="block text-sm font-medium text-slate-700 mb-1.5"
+                htmlFor="age"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
               >
-                Full Name <span className="text-red-500">*</span>
+                Age (Years) <span className="text-rose-500">*</span>
               </label>
               <input
-                id="fullName"
-                type="text"
-                value={fullName}
+                id="age"
+                type="number"
+                min="1"
+                max="125"
+                value={age}
                 onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errors.full_name) {
-                    setErrors((prev) => ({ ...prev, full_name: undefined }));
+                  setAge(e.target.value);
+                  if (errors.age) {
+                    setErrors((prev) => ({ ...prev, age: undefined }));
                   }
                 }}
-                placeholder="Enter patient's full name"
+                placeholder="e.g. 52"
                 disabled={submitting}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
-                  errors.full_name
-                    ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                    : "border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className={`w-full rounded-xl border px-4 py-2.5 text-xs sm:text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
+                  errors.age
+                    ? "border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                    : "border-slate-200 bg-slate-50 focus:bg-white focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10"
                 }`}
               />
-              {errors.full_name && (
-                <p className="mt-1.5 text-xs text-red-600 font-medium">
-                  {errors.full_name}
+              {errors.age && (
+                <p className="mt-1.5 text-xs text-rose-600 font-semibold">
+                  {errors.age}
                 </p>
               )}
             </div>
 
-            {/* Age & Gender Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Age */}
-              <div>
-                <label
-                  htmlFor="age"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Age (Years) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="age"
-                  type="number"
-                  min="1"
-                  max="125"
-                  value={age}
-                  onChange={(e) => {
-                    setAge(e.target.value);
-                    if (errors.age) {
-                      setErrors((prev) => ({ ...prev, age: undefined }));
-                    }
-                  }}
-                  placeholder="Enter age"
-                  disabled={submitting}
-                  className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
-                    errors.age
-                      ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                      : "border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  }`}
-                />
-                {errors.age && (
-                  <p className="mt-1.5 text-xs text-red-600 font-medium">
-                    {errors.age}
-                  </p>
-                )}
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label
-                  htmlFor="gender"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Gender <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="gender"
-                  value={gender}
-                  onChange={(e) => {
-                    setGender(e.target.value);
-                    if (errors.gender) {
-                      setErrors((prev) => ({ ...prev, gender: undefined }));
-                    }
-                  }}
-                  disabled={submitting}
-                  className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition bg-white disabled:bg-slate-50 disabled:cursor-not-allowed ${
-                    errors.gender
-                      ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                      : "border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  }`}
-                >
-                  <option value="">Select gender</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
-                </select>
-                {errors.gender && (
-                  <p className="mt-1.5 text-xs text-red-600 font-medium">
-                    {errors.gender}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Phone & Email Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Phone */}
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Phone Number <span className="text-xs text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter phone number"
-                  disabled={submitting}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* Email */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Email Address <span className="text-xs text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errors.email) {
-                      setErrors((prev) => ({ ...prev, email: undefined }));
-                    }
-                  }}
-                  placeholder="Enter email address"
-                  disabled={submitting}
-                  className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
-                    errors.email
-                      ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                      : "border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="mt-1.5 text-xs text-red-600 font-medium">
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Address */}
+            {/* Gender */}
             <div>
               <label
-                htmlFor="address"
-                className="block text-sm font-medium text-slate-700 mb-1.5"
+                htmlFor="gender"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
               >
-                Address <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Gender <span className="text-rose-500">*</span>
               </label>
-              <textarea
-                id="address"
-                rows={3}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter patient residential address"
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  if (errors.gender) {
+                    setErrors((prev) => ({ ...prev, gender: undefined }));
+                  }
+                }}
                 disabled={submitting}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className={`w-full rounded-xl border px-4 py-2.5 text-xs sm:text-sm outline-none transition bg-slate-50 focus:bg-white disabled:bg-slate-50 disabled:cursor-not-allowed ${
+                  errors.gender
+                    ? "border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                    : "border-slate-200 focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10"
+                }`}
+              >
+                <option value="">Select gender</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+              {errors.gender && (
+                <p className="mt-1.5 text-xs text-rose-600 font-semibold">
+                  {errors.gender}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Phone & Email Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Phone */}
+            <div>
+              <label
+                htmlFor="phone"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+              >
+                Phone Number <span className="text-xs text-slate-400 font-normal lowercase">(Optional)</span>
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. +91 98765 43210"
+                disabled={submitting}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-4 py-2.5 text-xs sm:text-sm outline-none transition focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50 disabled:cursor-not-allowed font-mono"
               />
             </div>
 
-            {/* Form Actions */}
-            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100">
-              <Link
-                to="/health-worker/patients"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-100"
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
               >
-                Cancel
-              </Link>
-              <button
-                type="submit"
+                Email Address <span className="text-xs text-slate-400 font-normal lowercase">(Optional)</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) {
+                    setErrors((prev) => ({ ...prev, email: undefined }));
+                  }
+                }}
+                placeholder="e.g. patient@example.com"
                 disabled={submitting}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed"
-              >
-                {submitting ? (
-                  <>
-                    <svg
-                      className="h-4 w-4 animate-spin text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8H4z"
-                      ></path>
-                    </svg>
-                    <span>Creating Patient...</span>
-                  </>
-                ) : (
-                  <span>Create Patient</span>
-                )}
-              </button>
+                className={`w-full rounded-xl border px-4 py-2.5 text-xs sm:text-sm outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed ${
+                  errors.email
+                    ? "border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                    : "border-slate-200 bg-slate-50 focus:bg-white focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10"
+                }`}
+              />
+              {errors.email && (
+                <p className="mt-1.5 text-xs text-rose-600 font-semibold">
+                  {errors.email}
+                </p>
+              )}
             </div>
-          </form>
-        </div>
-      </main>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label
+              htmlFor="address"
+              className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+            >
+              Residential Address <span className="text-xs text-slate-400 font-normal lowercase">(Optional)</span>
+            </label>
+            <textarea
+              id="address"
+              rows={3}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter patient residential or village address..."
+              disabled={submitting}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-4 py-2.5 text-xs sm:text-sm outline-none transition focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50 disabled:cursor-not-allowed resize-none"
+            />
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <Link
+              to="/health-worker/patients"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#3F54DA] px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#3F54DA]/20 hover:bg-blue-700 hover:shadow-lg hover:shadow-[#3F54DA]/30 transition duration-150 active:scale-[0.98] disabled:bg-blue-400 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+                  <span>Creating Patient...</span>
+                </>
+              ) : (
+                <span>Register Patient</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

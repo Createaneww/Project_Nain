@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -19,11 +19,6 @@ export async function fetchAdminUsers(params?: {
   role?: string;
   search?: string;
 }): Promise<AdminUser[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const url = new URL(`${API_BASE_URL}/api/admin/users/`);
   if (params?.role && params.role !== "ALL") {
     url.searchParams.set("role", params.role);
@@ -34,14 +29,14 @@ export async function fetchAdminUsers(params?: {
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await authenticatedFetch(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -66,21 +61,16 @@ export async function fetchAdminUsers(params?: {
 export async function fetchAdminUserById(
   id: string | number
 ): Promise<AdminUser> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${id}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -113,22 +103,17 @@ export async function createAdminUser(data: {
   full_name?: string;
   is_active?: boolean;
 }): Promise<AdminUser> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/admin/users/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -166,22 +151,17 @@ export async function updateAdminUser(
     password?: string;
   }
 ): Promise<AdminUser> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${id}/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );

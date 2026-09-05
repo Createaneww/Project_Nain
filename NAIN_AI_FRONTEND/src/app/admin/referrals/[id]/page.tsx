@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
+import { Link, useParams } from "react-router-dom";
 import {
   fetchReferralById,
   assignDoctorToReferral,
@@ -22,9 +21,7 @@ import {
 } from "../../../../services/users";
 
 function AdminReferralDetailPage() {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const storedUser = getStoredUser();
 
   const [referral, setReferral] = useState<Referral | null>(null);
   const [report, setReport] = useState<Report | null>(null);
@@ -94,11 +91,6 @@ function AdminReferralDetailPage() {
     loadData();
   }, [loadData]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
-
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
     try {
@@ -136,7 +128,7 @@ function AdminReferralDetailPage() {
   // Handle Assign / Reassign doctor
   const handleAssignDoctor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!referral || !selectedDoctorId) return;
+    if (!referral || !selectedDoctorId || assigning) return;
 
     const wasReassign = referral.status === "ASSIGNED" || referral.assigned_doctor !== null;
 
@@ -151,13 +143,13 @@ function AdminReferralDetailPage() {
       );
       setReferral(updatedRef);
       setShowReassignBox(false);
-      setSelectedDoctorId("");
 
       const assignedDoc = doctors.find((d) => d.id === Number(selectedDoctorId));
       const docName =
         assignedDoc?.full_name ||
         `${assignedDoc?.first_name || ""} ${assignedDoc?.last_name || ""}`.trim() ||
         assignedDoc?.username ||
+        updatedRef.assigned_doctor_name ||
         "Doctor";
 
       setAssignSuccess(
@@ -165,6 +157,14 @@ function AdminReferralDetailPage() {
           ? `Doctor reassigned successfully (Dr. ${docName}).`
           : `Doctor assigned successfully (Dr. ${docName}).`
       );
+      setSelectedDoctorId("");
+
+      try {
+        const fresh = await fetchReferralById(referral.id);
+        setReferral(fresh);
+      } catch {
+        // Fallback
+      }
 
       // Refresh list in background
       fetchReferrals().then(setAllReferrals).catch(() => {});
@@ -267,109 +267,56 @@ function AdminReferralDetailPage() {
   const gradcamImg = resolveImageUrl(report?.gradcam_url);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-[#354DAB] uppercase tracking-wider bg-[#E8F2FE] px-2.5 py-0.5 rounded-full">
+              Clinical Referral Details
+            </span>
+            <span className="text-xs text-slate-400 font-mono">Case #{id}</span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/referrals"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Referrals
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Specialist Referral #{id}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Clinical ophthalmologist assignment, evaluation notes, AI report, and collection tracking.
+          </p>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/admin/referrals"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+          >
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            All Referrals
           </Link>
-          <span>/</span>
-          <Link to="/admin/referrals" className="hover:text-blue-600 transition">
-            Referral Management
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Referral #{id}</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Specialist Referral Details
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Clinical ophthalmologist assignment, evaluation notes, AI report, and collection tracking.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
+          {referral?.patient_id && (
             <Link
-              to="/admin/referrals"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+              to={`/admin/patients/${referral.patient_id}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
             >
-              ← Back to Referrals
+              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Patient Profile
             </Link>
-            {referral?.patient_id && (
-              <Link
-                to={`/admin/patients/${referral.patient_id}`}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-              >
-                ← Back to Patient
-              </Link>
-            )}
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadData}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={loadData}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#354DAB] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-[#2A3E8C] transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
+      </div>
 
         {/* Assignment Success Banner */}
         {assignSuccess && (
@@ -378,7 +325,7 @@ function AdminReferralDetailPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">✅</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <div>
                 <p className="font-semibold text-emerald-900">Doctor Assignment Updated</p>
                 <p className="text-xs text-emerald-700 mt-0.5">{assignSuccess}</p>
@@ -389,7 +336,7 @@ function AdminReferralDetailPage() {
               onClick={() => setAssignSuccess(null)}
               className="text-xs text-emerald-600 hover:text-emerald-800 font-bold"
             >
-              ✕
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         )}
@@ -401,7 +348,7 @@ function AdminReferralDetailPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">⚠️</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               <div>
                 <p className="font-semibold text-red-900">Assignment Error</p>
                 <p className="text-xs text-red-700 mt-0.5">{assignError}</p>
@@ -412,7 +359,7 @@ function AdminReferralDetailPage() {
               onClick={() => setAssignError(null)}
               className="text-xs text-red-600 hover:text-red-800 font-bold"
             >
-              ✕
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         )}
@@ -432,7 +379,7 @@ function AdminReferralDetailPage() {
         {!loading && isNotFound && (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-              📋
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
             <h2 className="text-lg font-semibold text-slate-800">
               Referral not found
@@ -475,7 +422,7 @@ function AdminReferralDetailPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl font-bold text-slate-700 border border-slate-200">
-                  📋
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -507,7 +454,7 @@ function AdminReferralDetailPage() {
                     <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
                       <div>
                         <h3 className="text-base font-bold text-indigo-950 flex items-center gap-2">
-                          <span>🩺</span>
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
                           <span>
                             {referral.status === "PENDING"
                               ? "Assign Specialist Doctor"
@@ -574,7 +521,7 @@ function AdminReferralDetailPage() {
                             >
                               {assigning ? (
                                 <>
-                                  <span className="animate-spin text-xs">🌀</span>
+                                  <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                                   <span>Assigning...</span>
                                 </>
                               ) : (
@@ -621,7 +568,7 @@ function AdminReferralDetailPage() {
                         Specialist diagnosis, clinical recommendations, and treatment plan.
                       </p>
                     </div>
-                    <span className="text-xl">🩺</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
                   </div>
 
                   {/* Doctor Info */}
@@ -631,7 +578,7 @@ function AdminReferralDetailPage() {
                       <span className="font-bold text-slate-900 text-sm mt-1 block">
                         {referral.assigned_doctor_name ? (
                           <span className="text-indigo-700 flex items-center gap-1.5">
-                            <span>🩺</span>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
                             <span>Dr. {referral.assigned_doctor_name}</span>
                           </span>
                         ) : (
@@ -743,7 +690,7 @@ function AdminReferralDetailPage() {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Patient Details
                     </h4>
-                    <span className="text-lg">👤</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                   </div>
 
                   <div>
@@ -795,7 +742,7 @@ function AdminReferralDetailPage() {
                     <h4 className="font-bold uppercase tracking-wider text-slate-500">
                       Screening Record
                     </h4>
-                    <span className="text-lg">👁️</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
 
                   <div className="flex justify-between py-1">
@@ -847,7 +794,6 @@ function AdminReferralDetailPage() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

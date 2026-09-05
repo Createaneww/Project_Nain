@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../app/login/page";
+import ForgotPasswordPage from "../app/forgot-password/page";
+import ResetPasswordPage from "../app/reset-password/page";
 import AdminDashboardPage from "../app/admin/dashboard/page";
 import AdminUsersPage from "../app/admin/users/page";
 import AdminUserDetailPage from "../app/admin/users/[id]/page";
@@ -33,7 +35,10 @@ import HealthWorkerUploadImagePage from "../app/health-worker/screenings/[id]/up
 import HealthWorkerReportPage from "../app/health-worker/reports/[id]/page";
 import HealthWorkerReferralsPage from "../app/health-worker/referrals/page";
 import HealthWorkerReferralDetailPage from "../app/health-worker/referrals/[id]/page";
+import AdminLayout from "../components/AdminLayout";
+import DoctorLayout from "../components/DoctorLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
+import HealthWorkerLayout from "../components/HealthWorkerLayout";
 
 function AppRoutes() {
   return (
@@ -42,284 +47,78 @@ function AppRoutes() {
         {/* Public Authentication Routes */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Admin Dashboard & Management Routes */}
         <Route
-          path="/admin/dashboard"
+          path="/admin"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminDashboardPage />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminUsersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/users/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminUserDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/doctors"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminDoctorsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/doctors/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminDoctorDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/patients"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminPatientsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/patients/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminPatientDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/screenings"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminScreeningsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/screenings/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminScreeningDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/reports"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminReportsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/reports/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminReportDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/referrals"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminReferralsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/referrals/assign"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminReferralsAssignPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/referrals/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminReferralDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/collections"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminCollectionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/activity"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminActivityPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/activity/:id"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminActivityDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/notifications"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminNotificationsPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="users/:id" element={<AdminUserDetailPage />} />
+          <Route path="doctors" element={<AdminDoctorsPage />} />
+          <Route path="doctors/:id" element={<AdminDoctorDetailPage />} />
+          <Route path="patients" element={<AdminPatientsPage />} />
+          <Route path="patients/:id" element={<AdminPatientDetailPage />} />
+          <Route path="screenings" element={<AdminScreeningsPage />} />
+          <Route path="screenings/:id" element={<AdminScreeningDetailPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="reports/:id" element={<AdminReportDetailPage />} />
+          <Route path="referrals" element={<AdminReferralsPage />} />
+          <Route path="referrals/assign" element={<AdminReferralsAssignPage />} />
+          <Route path="referrals/:id" element={<AdminReferralDetailPage />} />
+          <Route path="collections" element={<AdminCollectionsPage />} />
+          <Route path="activity" element={<AdminActivityPage />} />
+          <Route path="activity/:id" element={<AdminActivityDetailPage />} />
+          <Route path="notifications" element={<AdminNotificationsPage />} />
+        </Route>
 
-        {/* Doctor Dashboard & Referral Routes */}
+        {/* Doctor Dashboard & Workflow Routes */}
         <Route
-          path="/doctor/dashboard"
+          path="/doctor"
           element={
             <ProtectedRoute allowedRoles={["DOCTOR"]}>
-              <DoctorDashboardPage />
+              <DoctorLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/doctor/referrals/:id"
-          element={
-            <ProtectedRoute allowedRoles={["DOCTOR"]}>
-              <DoctorReferralReviewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor/notifications"
-          element={
-            <ProtectedRoute allowedRoles={["DOCTOR"]}>
-              <DoctorNotificationsPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DoctorDashboardPage />} />
+          <Route path="referrals/:id" element={<DoctorReferralReviewPage />} />
+          <Route path="notifications" element={<DoctorNotificationsPage />} />
+        </Route>
 
         {/* Health Worker Dashboard & Workflow Routes */}
         <Route
-          path="/health-worker/dashboard"
+          path="/health-worker"
           element={
             <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerDashboardPage />
+              <HealthWorkerLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/health-worker/notifications"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerNotificationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/patients"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerPatientsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/patients/new"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerNewPatientPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/patients/:id"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerPatientDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/patients/:id/screening"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerNewScreeningPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/screenings"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerScreeningsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/screenings/new"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerNewScreeningPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/screenings/:id"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerScreeningDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/screenings/:id/upload"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerUploadImagePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/reports/:id"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerReportPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/referrals"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerReferralsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/health-worker/referrals/:id"
-          element={
-            <ProtectedRoute allowedRoles={["HEALTH_WORKER"]}>
-              <HealthWorkerReferralDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<HealthWorkerDashboardPage />} />
+          <Route path="notifications" element={<HealthWorkerNotificationsPage />} />
+          <Route path="patients" element={<HealthWorkerPatientsPage />} />
+          <Route path="patients/new" element={<HealthWorkerNewPatientPage />} />
+          <Route path="patients/:id" element={<HealthWorkerPatientDetailPage />} />
+          <Route path="patients/:id/screening" element={<HealthWorkerNewScreeningPage />} />
+          <Route path="screenings" element={<HealthWorkerScreeningsPage />} />
+          <Route path="screenings/new" element={<HealthWorkerNewScreeningPage />} />
+          <Route path="screenings/:id" element={<HealthWorkerScreeningDetailPage />} />
+          <Route path="screenings/:id/upload" element={<HealthWorkerUploadImagePage />} />
+          <Route path="reports/:id" element={<HealthWorkerReportPage />} />
+          <Route path="referrals" element={<HealthWorkerReferralsPage />} />
+          <Route path="referrals/:id" element={<HealthWorkerReferralDetailPage />} />
+        </Route>
 
         {/* Catch-all fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />

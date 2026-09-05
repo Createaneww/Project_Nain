@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
+import { Link, useParams } from "react-router-dom";
 import {
   fetchAdminUserById,
   type AdminUser,
@@ -11,9 +10,7 @@ import {
 } from "../../../../services/referrals";
 
 function AdminDoctorDetailPage() {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const storedUser = getStoredUser();
 
   const [doctor, setDoctor] = useState<AdminUser | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -61,11 +58,6 @@ function AdminDoctorDetailPage() {
   useEffect(() => {
     loadDoctorData();
   }, [loadDoctorData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -189,101 +181,45 @@ function AdminDoctorDetailPage() {
     : "";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-[#354DAB] uppercase tracking-wider bg-[#E8F2FE] px-2.5 py-0.5 rounded-full">
+              Specialist Profile
+            </span>
+            <span className="text-xs text-slate-400 font-mono">Dr. {displayName || `ID #${id}`}</span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/doctors"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Doctors
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Doctor Profile & Workload
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Specialist credentials, active assigned referrals, and completed clinical evaluations.
+          </p>
         </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/admin/doctors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+          >
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            All Doctors
           </Link>
-          <span>/</span>
-          <Link to="/admin/doctors" className="hover:text-blue-600 transition">
-            Doctor Management
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Dr. {displayName || `Doctor #${id}`}</span>
-        </nav>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Doctor Profile & Clinical Workload
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Specialist credentials, active assigned referrals, and completed clinical evaluations.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/admin/doctors"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← All Doctors
-            </Link>
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadDoctorData}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={loadDoctorData}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#354DAB] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-[#2A3E8C] transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
+      </div>
 
         {/* Loading State */}
         {loading && (
@@ -305,7 +241,7 @@ function AdminDoctorDetailPage() {
         {!loading && isNotFound && (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-              🩺
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
             </div>
             <h2 className="text-lg font-semibold text-slate-800">
               Doctor not found
@@ -349,7 +285,7 @@ function AdminDoctorDetailPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-3xl font-bold text-indigo-700 border border-indigo-100">
-                    🩺
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -380,7 +316,7 @@ function AdminDoctorDetailPage() {
                 <div className="flex flex-col sm:items-end gap-1 text-xs text-slate-600">
                   {doctor.email && (
                     <p className="font-mono bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                      ✉️ {doctor.email}
+                      <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg> {doctor.email}</span>
                     </p>
                   )}
                   <p className="text-slate-400 mt-1">
@@ -399,7 +335,7 @@ function AdminDoctorDetailPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
                       Total Assigned
                     </span>
-                    <span className="text-lg">📁</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
                   </div>
                   <div className="mt-2">
                     <p className="text-2xl font-bold text-blue-700">
@@ -435,7 +371,7 @@ function AdminDoctorDetailPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
                       Reviewed
                     </span>
-                    <span className="text-lg">✅</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
                   <div className="mt-2">
                     <p className="text-2xl font-bold text-emerald-700">
@@ -453,7 +389,7 @@ function AdminDoctorDetailPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-purple-700">
                       Collected
                     </span>
-                    <span className="text-lg">📦</span>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                   </div>
                   <div className="mt-2">
                     <p className="text-2xl font-bold text-purple-700">
@@ -548,7 +484,6 @@ function AdminDoctorDetailPage() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

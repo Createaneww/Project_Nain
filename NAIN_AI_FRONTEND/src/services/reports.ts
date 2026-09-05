@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 const ML_BASE_URL = "http://127.0.0.1:8001";
@@ -65,21 +65,16 @@ export function resolveImageUrl(url?: string | null): string | null {
 }
 
 export async function fetchReports(): Promise<Report[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/reports/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/reports/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -98,21 +93,16 @@ export async function fetchReports(): Promise<Report[]> {
 }
 
 export async function fetchReportById(id: string | number): Promise<Report> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/reports/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/reports/${id}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -140,24 +130,19 @@ export async function fetchReportById(id: string | number): Promise<Report> {
 export async function fetchReportByScreeningId(
   screeningId: string | number
 ): Promise<Report> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(
+    response = await authenticatedFetch(
       `${API_BASE_URL}/api/screenings/${screeningId}/report/`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       }
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );

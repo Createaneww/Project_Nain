@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -30,24 +30,16 @@ export interface DoctorUser {
 }
 
 export async function fetchDoctors(): Promise<DoctorUser[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/auth/doctors/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/auth/doctors/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
   } catch {
-    throw new Error(
-      "Network error: Unable to connect to backend server. Please verify backend is running."
-    );
+    return [];
   }
 
   if (!response.ok) {
@@ -62,11 +54,6 @@ export async function fetchReferrals(params?: {
   patient_id?: string | number;
   doctor_id?: string | number;
 }): Promise<Referral[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const url = new URL(`${API_BASE_URL}/api/referrals/`);
   if (params?.status && params.status !== "ALL") {
     url.searchParams.set("status", params.status);
@@ -80,14 +67,14 @@ export async function fetchReferrals(params?: {
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await authenticatedFetch(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -95,14 +82,16 @@ export async function fetchReferrals(params?: {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
+    if (response.status === 401) {
+      throw new Error("Session expired. Please log in again.");
+    }
+    if (response.status === 403) {
+      throw new Error("Access forbidden. Required role permission missing.");
+    }
     const errorMessage =
       errorData?.detail ||
       errorData?.message ||
-      (response.status === 401
-        ? "Session expired. Please log in again."
-        : response.status === 403
-        ? "Access forbidden. Required role permission missing."
-        : "Failed to fetch referrals list.");
+      "Failed to fetch referrals list.";
     throw new Error(errorMessage);
   }
 
@@ -112,21 +101,16 @@ export async function fetchReferrals(params?: {
 export async function fetchReferralById(
   id: string | number
 ): Promise<Referral> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/referrals/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/referrals/${id}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -137,14 +121,16 @@ export async function fetchReferralById(
       throw new Error("Referral not found.");
     }
     const errorData = await response.json().catch(() => null);
+    if (response.status === 401) {
+      throw new Error("Session expired. Please log in again.");
+    }
+    if (response.status === 403) {
+      throw new Error("Access forbidden. Required role permission missing.");
+    }
     const errorMessage =
       errorData?.detail ||
       errorData?.message ||
-      (response.status === 401
-        ? "Session expired. Please log in again."
-        : response.status === 403
-        ? "Access forbidden. Required role permission missing."
-        : "Failed to fetch referral details.");
+      "Failed to fetch referral details.";
     throw new Error(errorMessage);
   }
 
@@ -155,27 +141,22 @@ export async function assignDoctorToReferral(
   referralId: string | number,
   doctorId: number
 ): Promise<Referral> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(
+    response = await authenticatedFetch(
       `${API_BASE_URL}/api/referrals/${referralId}/assign-doctor/`,
       {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           doctor_id: doctorId,
         }),
       }
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -197,24 +178,19 @@ export async function reviewReferral(
   id: string | number,
   doctorNotes: string
 ): Promise<Referral> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/referrals/${id}/review/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/referrals/${id}/review/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         doctor_notes: doctorNotes,
       }),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -235,21 +211,16 @@ export async function reviewReferral(
 export async function collectReferral(
   id: string | number
 ): Promise<Referral> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/referrals/${id}/collect/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/referrals/${id}/collect/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );

@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 import type { AnalyzeScreeningResponse } from "./reports";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -24,11 +24,6 @@ export async function fetchScreenings(params?: {
   created_by?: string | number;
   date?: string;
 }): Promise<Screening[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const url = new URL(`${API_BASE_URL}/api/screenings/`);
   if (params?.patient_id) {
     url.searchParams.set("patient_id", String(params.patient_id));
@@ -42,14 +37,14 @@ export async function fetchScreenings(params?: {
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await authenticatedFetch(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -57,14 +52,16 @@ export async function fetchScreenings(params?: {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
+    if (response.status === 401) {
+      throw new Error("Session expired. Please log in again.");
+    }
+    if (response.status === 403) {
+      throw new Error("Access forbidden. Required role permission missing.");
+    }
     const errorMessage =
       errorData?.detail ||
       errorData?.message ||
-      (response.status === 401
-        ? "Session expired. Please log in again."
-        : response.status === 403
-        ? "Access forbidden. Required role permission missing."
-        : "Failed to fetch screenings list.");
+      "Failed to fetch screenings list.";
     throw new Error(errorMessage);
   }
 
@@ -74,24 +71,19 @@ export async function fetchScreenings(params?: {
 export async function createScreening(
   payload: CreateScreeningPayload
 ): Promise<Screening> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/screenings/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/screenings/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         patient: payload.patient,
       }),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -118,28 +110,21 @@ export async function uploadFundusImage(
   screeningId: number | string,
   imageFile: File
 ): Promise<Screening> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const formData = new FormData();
   formData.append("fundus_image", imageFile);
 
   let response: Response;
   try {
     // IMPORTANT: Do NOT manually set Content-Type header so browser sets multipart boundary automatically
-    response = await fetch(
+    response = await authenticatedFetch(
       `${API_BASE_URL}/api/screenings/${screeningId}/upload/`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
       }
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -164,24 +149,19 @@ export async function uploadFundusImage(
 export async function analyzeScreening(
   screeningId: number | string
 ): Promise<AnalyzeScreeningResponse> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(
+    response = await authenticatedFetch(
       `${API_BASE_URL}/api/screenings/${screeningId}/analyze/`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       }
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -205,21 +185,16 @@ export async function analyzeScreening(
 export async function fetchScreeningById(
   id: string | number
 ): Promise<Screening> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/screenings/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/screenings/${id}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
