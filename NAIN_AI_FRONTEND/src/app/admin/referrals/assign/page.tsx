@@ -312,11 +312,11 @@ function AdminReferralsAssignPage() {
       // Show toast
       if (assignedCount === 1) {
         setSuccessToast(
-          `Referral #${confirmDialog.referralIds[0]} assigned successfully to Dr. ${targetDocName}.`
+          `Doctor assigned successfully (Referral #${confirmDialog.referralIds[0]} -> Dr. ${targetDocName}).`
         );
       } else {
         setSuccessToast(
-          `${assignedCount} referrals assigned successfully to Dr. ${targetDocName}.`
+          `Doctor assigned successfully (${assignedCount} referrals -> Dr. ${targetDocName}).`
         );
       }
 

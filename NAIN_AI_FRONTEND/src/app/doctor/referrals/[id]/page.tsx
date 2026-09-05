@@ -112,10 +112,12 @@ function DoctorReferralReviewPage() {
     if (!referral || !storedUser) return;
     setClaiming(true);
     setClaimError(null);
+    setSubmitError(null);
 
     try {
       const updated = await assignDoctorToReferral(referral.id, storedUser.id);
       setReferral(updated);
+      setSubmitSuccess("Case assigned to you successfully.");
     } catch (err) {
       if (err instanceof Error) {
         setClaimError(err.message || "Failed to claim this referral.");
@@ -155,7 +157,7 @@ function DoctorReferralReviewPage() {
     try {
       const updated = await reviewReferral(referral.id, doctorNotes.trim());
       setReferral(updated);
-      setSubmitSuccess("Clinical review finalized and saved successfully!");
+      setSubmitSuccess("Clinical evaluation submitted successfully.");
     } catch (err) {
       if (err instanceof Error) {
         setSubmitError(err.message || "Failed to submit doctor review.");

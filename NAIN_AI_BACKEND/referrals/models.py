@@ -55,6 +55,13 @@ class Referral(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def patient(self):
+        try:
+            return self.report.screening.patient
+        except Exception:
+            return None
+
     def __str__(self):
         try:
             return f"Referral #{self.id} - {self.report.screening.patient.full_name}"

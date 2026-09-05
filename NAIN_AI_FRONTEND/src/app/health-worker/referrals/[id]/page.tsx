@@ -106,7 +106,7 @@ function HealthWorkerReferralDetailPage() {
       const updated = await assignDoctorToReferral(referral.id, Number(selectedDoctorId));
       setReferral(updated);
       setAssignSuccess(
-        `Assigned successfully to Dr. ${updated.assigned_doctor_name || "Doctor"}`
+        `Doctor assigned successfully (Dr. ${updated.assigned_doctor_name || "Doctor"}).`
       );
     } catch (err) {
       if (err instanceof Error) {

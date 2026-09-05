@@ -138,6 +138,8 @@ function AdminReferralDetailPage() {
     e.preventDefault();
     if (!referral || !selectedDoctorId) return;
 
+    const wasReassign = referral.status === "ASSIGNED" || referral.assigned_doctor !== null;
+
     setAssigning(true);
     setAssignError(null);
     setAssignSuccess(null);
@@ -159,7 +161,9 @@ function AdminReferralDetailPage() {
         "Doctor";
 
       setAssignSuccess(
-        `Referral #${referral.id} successfully assigned to Dr. ${docName}. Case status is now ASSIGNED.`
+        wasReassign
+          ? `Doctor reassigned successfully (Dr. ${docName}).`
+          : `Doctor assigned successfully (Dr. ${docName}).`
       );
 
       // Refresh list in background

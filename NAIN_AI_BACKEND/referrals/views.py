@@ -111,32 +111,35 @@ class ReferralAssignDoctorView(APIView):
         referral.status = "ASSIGNED"
         referral.save()
 
-        from accounts.activity import log_activity
-        patient = referral.patient
-        patient_name = patient.full_name if patient else ""
-        patient_id = patient.id if patient else None
+        try:
+            from accounts.activity import log_activity
+            patient = getattr(referral, "patient", None)
+            patient_name = patient.full_name if patient else ""
+            patient_id = patient.id if patient else None
 
-        log_activity(
-            event_type="DOCTOR_REASSIGNED" if was_already_assigned else "DOCTOR_ASSIGNED",
-            category="REFERRAL",
-            details=f"Referral #{referral.id} {'reassigned' if was_already_assigned else 'assigned'} to Dr. {doctor.full_name or doctor.username}.",
-            actor=request.user,
-            entity_type="Referral",
-            entity_id=referral.id,
-            patient_id=patient_id,
-            patient_name=patient_name,
-        )
+            log_activity(
+                event_type="DOCTOR_REASSIGNED" if was_already_assigned else "DOCTOR_ASSIGNED",
+                category="REFERRAL",
+                details=f"Referral #{referral.id} {'reassigned' if was_already_assigned else 'assigned'} to Dr. {doctor.full_name or doctor.username}.",
+                actor=request.user,
+                entity_type="Referral",
+                entity_id=referral.id,
+                patient_id=patient_id,
+                patient_name=patient_name,
+            )
 
-        from accounts.notifications import create_notification
-        create_notification(
-            recipient=doctor,
-            type="CASE_ASSIGNED",
-            title="New Case Assigned",
-            message=f"You have been assigned a new case for {patient_name or f'Patient #{patient_id}'}.",
-            related_entity_type="Referral",
-            related_entity_id=referral.id,
-            action_url=f"/doctor/referrals/{referral.id}",
-        )
+            from accounts.notifications import create_notification
+            create_notification(
+                recipient=doctor,
+                type="CASE_ASSIGNED",
+                title="New Case Assigned",
+                message=f"You have been assigned a new case for {patient_name or f'Patient #{patient_id}'}.",
+                related_entity_type="Referral",
+                related_entity_id=referral.id,
+                action_url=f"/doctor/referrals/{referral.id}",
+            )
+        except Exception:
+            pass
 
         return Response(
             ReferralSerializer(referral).data,
@@ -193,46 +196,49 @@ class ReferralReviewView(APIView):
         referral.reviewed_at = timezone.now()
         referral.save()
 
-        from accounts.activity import log_activity
-        patient = referral.patient
-        patient_name = patient.full_name if patient else ""
-        patient_id = patient.id if patient else None
-
-        log_activity(
-            event_type="CLINICAL_EVALUATION_SUBMITTED",
-            category="CLINICAL_EVALUATION",
-            details=f"Clinical evaluation and diagnosis submitted by Dr. {request.user.full_name or request.user.username} for referral #{referral.id}.",
-            actor=request.user,
-            entity_type="Referral",
-            entity_id=referral.id,
-            patient_id=patient_id,
-            patient_name=patient_name,
-        )
-
-        from accounts.notifications import notify_admins, create_notification
-        # Notify Admins
-        notify_admins(
-            type="CLINICAL_REVIEW_COMPLETED",
-            title="Clinical Review Completed",
-            message=f"Dr. {request.user.full_name or request.user.username} completed the review for {patient_name or f'Patient #{patient_id}'}.",
-            related_entity_type="Referral",
-            related_entity_id=referral.id,
-            action_url=f"/admin/referrals/{referral.id}",
-        )
-
-        # Notify responsible Health Worker if available
         try:
-            creator = referral.report.screening.created_by
-            if creator and creator.role == User.Role.HEALTH_WORKER:
-                create_notification(
-                    recipient=creator,
-                    type="REPORT_READY_FOR_COLLECTION",
-                    title="Report Ready for Collection",
-                    message=f"The clinical review for {patient_name or f'Patient #{patient_id}'} is complete and the report is ready for collection.",
-                    related_entity_type="Referral",
-                    related_entity_id=referral.id,
-                    action_url=f"/health-worker/referrals/{referral.id}",
-                )
+            from accounts.activity import log_activity
+            patient = getattr(referral, "patient", None)
+            patient_name = patient.full_name if patient else ""
+            patient_id = patient.id if patient else None
+
+            log_activity(
+                event_type="CLINICAL_EVALUATION_SUBMITTED",
+                category="CLINICAL_EVALUATION",
+                details=f"Clinical evaluation and diagnosis submitted by Dr. {request.user.full_name or request.user.username} for referral #{referral.id}.",
+                actor=request.user,
+                entity_type="Referral",
+                entity_id=referral.id,
+                patient_id=patient_id,
+                patient_name=patient_name,
+            )
+
+            from accounts.notifications import notify_admins, create_notification
+            # Notify Admins
+            notify_admins(
+                type="CLINICAL_REVIEW_COMPLETED",
+                title="Clinical Review Completed",
+                message=f"Dr. {request.user.full_name or request.user.username} completed the review for {patient_name or f'Patient #{patient_id}'}.",
+                related_entity_type="Referral",
+                related_entity_id=referral.id,
+                action_url=f"/admin/referrals/{referral.id}",
+            )
+
+            # Notify responsible Health Worker if available
+            try:
+                creator = referral.report.screening.created_by
+                if creator and creator.role == User.Role.HEALTH_WORKER:
+                    create_notification(
+                        recipient=creator,
+                        type="REPORT_READY_FOR_COLLECTION",
+                        title="Report Ready for Collection",
+                        message=f"The clinical review for {patient_name or f'Patient #{patient_id}'} is complete and the report is ready for collection.",
+                        related_entity_type="Referral",
+                        related_entity_id=referral.id,
+                        action_url=f"/health-worker/referrals/{referral.id}",
+                    )
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -272,36 +278,40 @@ class ReferralCollectView(APIView):
         referral.collected_by = request.user
         referral.save()
 
-        from accounts.activity import log_activity
-        patient = referral.patient
-        patient_name = patient.full_name if patient else ""
-        patient_id = patient.id if patient else None
-        method = "Admin Office" if getattr(request.user, "role", "") == "ADMIN" else "Health Worker Field"
+        try:
+            from accounts.activity import log_activity
+            patient = getattr(referral, "patient", None)
+            patient_name = patient.full_name if patient else ""
+            patient_id = patient.id if patient else None
+            method = "Admin Office" if getattr(request.user, "role", "") == "ADMIN" else "Health Worker Field"
 
-        log_activity(
-            event_type="REPORT_COLLECTED",
-            category="COLLECTION",
-            details=f"Final screening report #{referral.report_id or referral.id} collected by {request.user.full_name or request.user.username} ({method}).",
-            actor=request.user,
-            entity_type="Referral",
-            entity_id=referral.id,
-            patient_id=patient_id,
-            patient_name=patient_name,
-        )
+            log_activity(
+                event_type="REPORT_COLLECTED",
+                category="COLLECTION",
+                details=f"Final screening report #{referral.report_id or referral.id} collected by {request.user.full_name or request.user.username} ({method}).",
+                actor=request.user,
+                entity_type="Referral",
+                entity_id=referral.id,
+                patient_id=patient_id,
+                patient_name=patient_name,
+            )
 
-        from accounts.notifications import notify_admins
-        notify_admins(
-            type="REPORT_COLLECTED",
-            title="Report Collected",
-            message=f"{patient_name or f'Patient #{patient_id}'}'s reviewed report has been collected.",
-            related_entity_type="Referral",
-            related_entity_id=referral.id,
-            action_url="/admin/collections",
-        )
+            from accounts.notifications import notify_admins
+            notify_admins(
+                type="REPORT_COLLECTED",
+                title="Report Collected",
+                message=f"{patient_name or f'Patient #{patient_id}'}'s reviewed report has been collected.",
+                related_entity_type="Referral",
+                related_entity_id=referral.id,
+                action_url="/admin/collections",
+            )
+        except Exception:
+            pass
 
         return Response(
             ReferralSerializer(referral).data,
             status=status.HTTP_200_OK
         )
+
 
 
