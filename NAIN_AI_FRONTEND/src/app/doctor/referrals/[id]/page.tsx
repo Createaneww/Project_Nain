@@ -1,3 +1,4 @@
+// 
 import { useEffect, useState, useCallback, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getStoredUser } from "../../../../services/auth";
@@ -111,6 +112,12 @@ function DoctorReferralReviewPage() {
     try {
       const updated = await assignDoctorToReferral(referral.id, Number(storedUser.id));
       setReferral(updated);
+      try {
+        const fresh = await fetchReferralById(referral.id);
+        setReferral(fresh);
+      } catch {
+        // Fallback to updated response
+      }
     } catch (err) {
       if (err instanceof Error) {
         setClaimError(err.message || "Failed to claim this referral.");
@@ -153,6 +160,12 @@ function DoctorReferralReviewPage() {
       const updated = await reviewReferral(referral.id, doctorNotes.trim());
       setReferral(updated);
       setSubmitSuccess("Clinical review finalized and saved successfully!");
+      try {
+        const fresh = await fetchReferralById(referral.id);
+        setReferral(fresh);
+      } catch {
+        // Fallback to updated response
+      }
     } catch (err) {
       if (err instanceof Error) {
         setSubmitError(err.message || "Failed to submit doctor review.");
