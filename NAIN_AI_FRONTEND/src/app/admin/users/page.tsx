@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../services/auth";
+import { Link } from "react-router-dom";
+import { getStoredUser } from "../../../services/auth";
 import {
   fetchAdminUsers,
   createAdminUser,
@@ -31,9 +31,7 @@ const initialAddForm: AddUserFormData = {
 };
 
 function AdminUsersPage() {
-  const navigate = useNavigate();
   const storedUser = getStoredUser();
-
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,11 +94,6 @@ function AdminUsersPage() {
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -365,102 +358,52 @@ function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Admin Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Dashboard
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0A194E] tracking-tight">
+            User Accounts &amp; Staff Management
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Create, manage, and provision healthcare provider accounts, doctors, and health worker credentials.
+          </p>
         </div>
-      </header>
 
-      {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Users Management</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Users Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage system users, roles, account access, and staff status.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setAddFormData(initialAddForm);
-                setAddError(null);
-                setIsAddModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-purple-500/20 hover:bg-purple-700 transition"
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setAddFormData(initialAddForm);
+              setAddError(null);
+              setIsAddModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#354DAB] px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-900/20 hover:bg-[#2A3E8C] transition active:scale-[0.98]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add New User</span>
+          </button>
+          <button
+            type="button"
+            onClick={loadUsers}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition active:scale-[0.98] disabled:opacity-60"
+          >
+            <svg
+              className={`w-4 h-4 text-slate-500 ${loading ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
             >
-              <span>+ Add User</span>
-            </button>
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadUsers}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh</span>
+          </button>
         </div>
+      </div>
 
         {/* Success Toast */}
         {successToast && (
@@ -469,7 +412,7 @@ function AdminUsersPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">✅</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <div>
                 <p className="font-semibold text-emerald-900">Success</p>
                 <p className="text-xs text-emerald-700 mt-0.5">{successToast}</p>
@@ -480,7 +423,7 @@ function AdminUsersPage() {
               onClick={() => setSuccessToast(null)}
               className="text-xs text-emerald-600 hover:text-emerald-800 font-bold"
             >
-              ✕
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         )}
@@ -492,7 +435,7 @@ function AdminUsersPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">⚠️</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               <div>
                 <p className="font-semibold text-red-900">Action Alert</p>
                 <p className="text-xs text-red-700 mt-0.5">{error}</p>
@@ -503,7 +446,7 @@ function AdminUsersPage() {
               onClick={() => setError(null)}
               className="text-xs text-red-600 hover:text-red-800 font-bold"
             >
-              ✕
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         )}
@@ -517,7 +460,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Total Users
                 </span>
-                <span className="text-lg">👥</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-slate-900">
@@ -535,7 +478,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-purple-700">
                   Administrators
                 </span>
-                <span className="text-lg">🛡️</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-purple-700">
@@ -553,7 +496,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
                   Doctors
                 </span>
-                <span className="text-lg">🩺</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-indigo-700">
@@ -571,7 +514,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
                   Health Workers
                 </span>
-                <span className="text-lg">🏥</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-blue-700">
@@ -589,7 +532,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
                   Active Users
                 </span>
-                <span className="text-lg">🟢</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-emerald-700">
@@ -607,7 +550,7 @@ function AdminUsersPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-rose-700">
                   Inactive Users
                 </span>
-                <span className="text-lg">⛔</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-rose-700">
@@ -627,7 +570,7 @@ function AdminUsersPage() {
             {/* Search Input */}
             <div className="relative w-full sm:flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                🔍
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
               </div>
               <input
                 type="text"
@@ -642,7 +585,7 @@ function AdminUsersPage() {
                   onClick={() => setSearchQuery("")}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-slate-400 hover:text-slate-600"
                 >
-                  ✕
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
@@ -684,7 +627,7 @@ function AdminUsersPage() {
           {loading && (
             <div className="p-8 space-y-4">
               <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
-                <span className="animate-spin">🌀</span>
+                <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                 <span>Loading users...</span>
               </div>
               {[1, 2, 3, 4].map((i) => (
@@ -700,7 +643,7 @@ function AdminUsersPage() {
           {!loading && filteredUsers.length === 0 && (
             <div className="p-12 text-center">
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-                👥
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
               </div>
               <h3 className="text-base font-semibold text-slate-800">
                 No users found
@@ -849,7 +792,6 @@ function AdminUsersPage() {
             </div>
           )}
         </div>
-      </main>
 
       {/* ADD USER MODAL */}
       {isAddModalOpen && (
@@ -857,8 +799,10 @@ function AdminUsersPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-7 shadow-xl border border-slate-200 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 text-xl font-bold">
-                  ➕
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#354DAB] font-bold">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -874,7 +818,7 @@ function AdminUsersPage() {
                 onClick={() => setIsAddModalOpen(false)}
                 className="text-xs text-slate-400 hover:text-slate-600 font-bold"
               >
-                ✕
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
@@ -1060,7 +1004,7 @@ function AdminUsersPage() {
                 >
                   {isSubmittingAdd ? (
                     <>
-                      <span className="animate-spin text-xs">🌀</span>
+                      <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                       <span>Creating User...</span>
                     </>
                   ) : (
@@ -1079,7 +1023,7 @@ function AdminUsersPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="text-xl">✏️</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
                 <h3 className="text-base font-bold text-slate-900">
                   Edit User @{editingUser.username}
                 </h3>
@@ -1089,7 +1033,7 @@ function AdminUsersPage() {
                 onClick={() => setEditingUser(null)}
                 className="text-xs text-slate-400 hover:text-slate-600 font-bold"
               >
-                ✕
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
@@ -1202,7 +1146,7 @@ function AdminUsersPage() {
                   }}
                   className="text-xs font-semibold text-amber-700 hover:text-amber-800 underline"
                 >
-                  Reset Password 🔑
+                  Reset Password
                 </button>
 
                 <div className="flex gap-2">
@@ -1234,7 +1178,7 @@ function AdminUsersPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="text-xl">🔑</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
                     Reset User Password
@@ -1249,7 +1193,7 @@ function AdminUsersPage() {
                 onClick={() => setPasswordResetUser(null)}
                 className="text-xs text-slate-400 hover:text-slate-600 font-bold"
               >
-                ✕
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
@@ -1316,7 +1260,7 @@ function AdminUsersPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 text-xl font-bold">
-                ⚠️
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">

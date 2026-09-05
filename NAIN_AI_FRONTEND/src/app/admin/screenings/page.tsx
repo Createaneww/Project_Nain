@@ -1,13 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../services/auth";
+import { Link } from "react-router-dom";
 import { fetchScreenings, type Screening } from "../../../services/screenings";
 import { fetchReports, type Report } from "../../../services/reports";
 
 function AdminScreeningsPage() {
-  const navigate = useNavigate();
-  const storedUser = getStoredUser();
-
   const [screenings, setScreenings] = useState<Screening[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -43,11 +39,6 @@ function AdminScreeningsPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -210,91 +201,38 @@ function AdminScreeningsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Admin Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Dashboard
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0A194E] tracking-tight">
+            Screenings &amp; AI Analysis Sessions
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Review and monitor patient retinal screenings, neural inference progress, and DR classification outputs.
+          </p>
         </div>
-      </header>
 
-      {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Screening Management</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Screening Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Review and monitor patient retinal screenings and AI analysis pipelines.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={loadData}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition active:scale-[0.98] disabled:opacity-60"
+          >
+            <svg
+              className={`w-4 h-4 text-slate-500 ${loading ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
             >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadData}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh</span>
+          </button>
         </div>
+      </div>
 
         {/* Error Alert */}
         {error && (
@@ -303,7 +241,7 @@ function AdminScreeningsPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">⚠️</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               <div>
                 <p className="font-semibold text-red-900">
                   Unable to load screenings list
@@ -330,7 +268,7 @@ function AdminScreeningsPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
                   Total Screenings
                 </span>
-                <span className="text-lg">👁️</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-blue-700">
@@ -348,7 +286,7 @@ function AdminScreeningsPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Initiated
                 </span>
-                <span className="text-lg">📝</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-slate-900">
@@ -366,7 +304,7 @@ function AdminScreeningsPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
                   Uploaded
                 </span>
-                <span className="text-lg">📷</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-blue-700">
@@ -384,7 +322,7 @@ function AdminScreeningsPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-amber-700">
                   Processing
                 </span>
-                <span className="text-lg">⚙️</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-amber-700">
@@ -402,7 +340,7 @@ function AdminScreeningsPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
                   Completed
                 </span>
-                <span className="text-lg">✅</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold text-emerald-700">
@@ -422,7 +360,7 @@ function AdminScreeningsPage() {
             {/* Search Input */}
             <div className="relative w-full sm:flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                🔍
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
               </div>
               <input
                 type="text"
@@ -437,7 +375,7 @@ function AdminScreeningsPage() {
                   onClick={() => setSearchQuery("")}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-slate-400 hover:text-slate-600"
                 >
-                  ✕
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
@@ -474,7 +412,7 @@ function AdminScreeningsPage() {
           {loading && (
             <div className="p-8 space-y-4">
               <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
-                <span className="animate-spin">🌀</span>
+                <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                 <span>Loading screenings list...</span>
               </div>
               {[1, 2, 3, 4].map((i) => (
@@ -490,7 +428,7 @@ function AdminScreeningsPage() {
           {!loading && filteredScreenings.length === 0 && (
             <div className="p-12 text-center">
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-                👁️
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </div>
               <h3 className="text-base font-semibold text-slate-800">
                 No screenings found
@@ -606,7 +544,6 @@ function AdminScreeningsPage() {
             </div>
           )}
         </div>
-      </main>
     </div>
   );
 }

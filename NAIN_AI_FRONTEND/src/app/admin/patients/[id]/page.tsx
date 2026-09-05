@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
+import { Link, useParams } from "react-router-dom";
 import {
   fetchPatientById,
   type Patient,
@@ -19,9 +18,7 @@ import {
 } from "../../../../services/reports";
 
 function AdminPatientDetailPage() {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const storedUser = getStoredUser();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [screenings, setScreenings] = useState<Screening[]>([]);
@@ -71,11 +68,6 @@ function AdminPatientDetailPage() {
   useEffect(() => {
     loadPatientData();
   }, [loadPatientData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -205,95 +197,45 @@ function AdminPatientDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-[#354DAB] uppercase tracking-wider bg-[#E8F2FE] px-2.5 py-0.5 rounded-full">
+              Patient Record
+            </span>
+            <span className="text-xs text-slate-400 font-mono">ID #{id}</span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/patients"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Patients
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Patient Profile & History
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Clinical screening records, longitudinal history, and diagnostic referral tracking.
+          </p>
         </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/admin/patients"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+          >
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            All Patients
           </Link>
-          <span>/</span>
-          <Link to="/admin/patients" className="hover:text-blue-600 transition">
-            Patient Management
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Patient #{id}</span>
-        </nav>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Patient Profile & History
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Clinical screening records and diagnostic referral tracking.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/patients"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Back to Patients
-            </Link>
-            <button
-              type="button"
-              onClick={loadPatientData}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={loadPatientData}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#354DAB] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-[#2A3E8C] transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
+      </div>
 
         {/* Loading State */}
         {loading && (
@@ -308,7 +250,7 @@ function AdminPatientDetailPage() {
         {!loading && isNotFound && (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-              👤
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
             </div>
             <h2 className="text-lg font-semibold text-slate-800">
               Patient record not found
@@ -352,7 +294,7 @@ function AdminPatientDetailPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-6">
                 <div className="flex items-center gap-4">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-2xl font-bold text-blue-700 border border-blue-100">
-                    👤
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">
@@ -525,7 +467,7 @@ function AdminPatientDetailPage() {
                           <td className="py-3.5 px-4 text-slate-700">
                             {ref.assigned_doctor_name ? (
                               <span className="font-semibold text-indigo-700">
-                                🩺 {ref.assigned_doctor_name}
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg> {ref.assigned_doctor_name}
                               </span>
                             ) : (
                               <span className="text-slate-400 italic">Unassigned</span>
@@ -552,7 +494,6 @@ function AdminPatientDetailPage() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

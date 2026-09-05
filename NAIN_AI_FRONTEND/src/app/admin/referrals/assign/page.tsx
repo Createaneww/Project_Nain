@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
+import { Link } from "react-router-dom";
 import {
   fetchReferrals,
   assignDoctorToReferral,
@@ -21,9 +20,6 @@ interface ConfirmDialogState {
 }
 
 function AdminReferralsAssignPage() {
-  const navigate = useNavigate();
-  const storedUser = getStoredUser();
-
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [doctors, setDoctors] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -72,11 +68,6 @@ function AdminReferralsAssignPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -283,20 +274,25 @@ function AdminReferralsAssignPage() {
       const assignedCount = confirmDialog.referralIds.length;
       const targetDocName = confirmDialog.doctorName;
 
-      // Update state: mark assigned referrals locally
-      setReferrals((prev) =>
-        prev.map((r) => {
-          if (confirmDialog.referralIds.includes(r.id)) {
-            return {
-              ...r,
-              assigned_doctor: confirmDialog.doctorId,
-              assigned_doctor_name: targetDocName,
-              status: "ASSIGNED",
-            };
-          }
-          return r;
-        })
-      );
+      // Update state: mark assigned referrals locally and sync from backend
+      try {
+        const freshList = await fetchReferrals();
+        setReferrals(freshList);
+      } catch {
+        setReferrals((prev) =>
+          prev.map((r) => {
+            if (confirmDialog.referralIds.includes(r.id)) {
+              return {
+                ...r,
+                assigned_doctor: confirmDialog.doctorId,
+                assigned_doctor_name: targetDocName,
+                status: "ASSIGNED",
+              };
+            }
+            return r;
+          })
+        );
+      }
 
       // Clean up selections
       setSelectedReferralIds((prev) =>
@@ -334,101 +330,47 @@ function AdminReferralsAssignPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Admin Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-[#354DAB] uppercase tracking-wider bg-[#E8F2FE] px-2.5 py-0.5 rounded-full">
+              Workload Distribution
+            </span>
+            <span className="text-xs text-slate-400 font-medium">
+              {pendingReferrals.length} Pending Referrals
+            </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/referrals"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Referrals
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Assign Referrals
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Assign pending clinical referral cases to available specialist doctors.
+          </p>
         </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/admin/referrals"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+          >
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Referrals
           </Link>
-          <span>/</span>
-          <Link to="/admin/referrals" className="hover:text-blue-600 transition">
-            Referral Management
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Assign Referrals</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Assign Referrals
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Assign pending clinical referral cases to available specialists.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/admin/referrals"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Back to Referrals
-            </Link>
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadData}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#354DAB] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-[#2A3E8C] transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
+      </div>
 
         {/* Success Toast */}
         {successToast && (
@@ -437,7 +379,11 @@ function AdminReferralsAssignPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">✅</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               <div>
                 <p className="font-semibold text-emerald-900">Assignment Complete</p>
                 <p className="text-xs text-emerald-700 mt-0.5">{successToast}</p>
@@ -446,9 +392,11 @@ function AdminReferralsAssignPage() {
             <button
               type="button"
               onClick={() => setSuccessToast(null)}
-              className="text-xs text-emerald-600 hover:text-emerald-800 font-bold"
+              className="text-emerald-600 hover:text-emerald-800 p-1"
             >
-              ✕
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         )}
@@ -460,7 +408,11 @@ function AdminReferralsAssignPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">⚠️</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-red-700">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
               <div>
                 <p className="font-semibold text-red-900">Assignment Error</p>
                 <p className="text-xs text-red-700 mt-0.5">{error}</p>
@@ -480,15 +432,19 @@ function AdminReferralsAssignPage() {
         <section aria-label="Assignment Metrics">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Pending Referrals */}
-            <div className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-amber-700">
                   Pending Referrals
                 </span>
-                <span className="text-lg">⏳</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
               <div className="mt-2">
-                <p className="text-2xl font-bold text-amber-700">
+                <p className="text-2xl font-bold text-slate-900">
                   {summaryCounts.pending}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -498,15 +454,19 @@ function AdminReferralsAssignPage() {
             </div>
 
             {/* Available Doctors */}
-            <div className="rounded-2xl border border-teal-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-teal-700">
                   Available Doctors
                 </span>
-                <span className="text-lg">🩺</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" />
+                  </svg>
+                </div>
               </div>
               <div className="mt-2">
-                <p className="text-2xl font-bold text-teal-700">
+                <p className="text-2xl font-bold text-slate-900">
                   {summaryCounts.availableDocs}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -516,15 +476,19 @@ function AdminReferralsAssignPage() {
             </div>
 
             {/* Total Active Cases */}
-            <div className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">
                   Total Active Cases
                 </span>
-                <span className="text-lg">📁</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                  </svg>
+                </div>
               </div>
               <div className="mt-2">
-                <p className="text-2xl font-bold text-blue-700">
+                <p className="text-2xl font-bold text-slate-900">
                   {summaryCounts.activeCases}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -595,7 +559,9 @@ function AdminReferralsAssignPage() {
                 >
                   {isProcessing ? (
                     <>
-                      <span className="animate-spin text-xs">🌀</span>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
                       <span>Assigning...</span>
                     </>
                   ) : (
@@ -613,7 +579,9 @@ function AdminReferralsAssignPage() {
           {loading && (
             <div className="p-8 space-y-4">
               <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
-                <span className="animate-spin">🌀</span>
+                <svg className="w-5 h-5 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
                 <span>Loading pending referrals...</span>
               </div>
               {[1, 2, 3, 4].map((i) => (
@@ -628,8 +596,10 @@ function AdminReferralsAssignPage() {
           {/* Empty State */}
           {!loading && pendingReferrals.length === 0 && (
             <div className="p-12 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl text-emerald-600 border border-emerald-100">
-                ✅
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h3 className="text-base font-semibold text-slate-800">
                 No pending referrals require assignment.
@@ -658,7 +628,8 @@ function AdminReferralsAssignPage() {
                       <input
                         type="checkbox"
                         checked={
-                          selectedReferralIds.length === pendingReferrals.length
+                          selectedReferralIds.length === pendingReferrals.length &&
+                          pendingReferrals.length > 0
                         }
                         onChange={toggleSelectAll}
                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -800,15 +771,16 @@ function AdminReferralsAssignPage() {
             </div>
           )}
         </div>
-      </main>
 
       {/* Confirmation Modal */}
       {confirmDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 text-xl font-bold">
-                🩺
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" />
+                </svg>
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
@@ -853,9 +825,12 @@ function AdminReferralsAssignPage() {
                 </p>
               )}
 
-              <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                ℹ️ The referral status will become <span className="font-semibold text-blue-700">ASSIGNED</span> and appear immediately on Dr. {confirmDialog.doctorName}&apos;s dashboard.
-              </p>
+              <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+                <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <span>The referral status will become <strong className="font-semibold text-blue-700">ASSIGNED</strong> and appear immediately on Dr. {confirmDialog.doctorName}&apos;s dashboard.</span>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -877,7 +852,9 @@ function AdminReferralsAssignPage() {
               >
                 {isProcessing ? (
                   <>
-                    <span className="animate-spin text-xs">🌀</span>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
                     <span>Assigning...</span>
                   </>
                 ) : (

@@ -279,3 +279,166 @@ class NotificationMarkAllReadView(APIView):
         return Response({"updated_count": updated_count, "message": "All notifications marked as read."})
 
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response(
+                {"detail": "Please enter your email address."},
+                status=400
+            )
+
+        # Standard anti-enumeration response
+        success_response = Response({
+            "message": "If an account with that email address exists, password reset instructions have been sent."
+        })
+
+        users = User.objects.filter(email__iexact=email, is_active=True)
+        if not users.exists():
+            return success_response
+
+        for user in users:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            # Construct frontend reset link
+            reset_url = f"http://localhost:5173/reset-password?uid={uid}&token={token}"
+
+            subject = "NAIN AI - Password Reset Instructions"
+            message = (
+                f"Hello {user.full_name or user.username},\n\n"
+                f"We received a request to reset the password for your NAIN AI account (@{user.username}).\n\n"
+                f"Please click or copy the link below into your browser to choose a new password:\n"
+                f"{reset_url}\n\n"
+                f"If you did not request a password reset, please ignore this email. This link is time-sensitive.\n\n"
+                f"Sincerely,\n"
+                f"NAIN AI Medical Healthcare Team"
+            )
+
+            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "NAIN AI <noreply@nainai.health>")
+            send_mail(
+                subject,
+                message,
+                from_email,
+                [user.email],
+                fail_silently=True
+            )
+
+        return success_response
+
+
+class PasswordResetVerifyView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        uid = request.data.get("uid")
+        token = request.data.get("token")
+
+        if not uid or not token:
+            return Response(
+                {"valid": False, "detail": "Missing reset token parameters."},
+                status=400
+            )
+
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id, is_active=True)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {"valid": False, "detail": "Invalid or expired password reset link."},
+                status=400
+            )
+
+        if default_token_generator.check_token(user, token):
+            return Response({"valid": True, "username": user.username})
+
+        return Response(
+            {"valid": False, "detail": "Password reset token is invalid or has expired."},
+            status=400
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        uid = request.data.get("uid")
+        token = request.data.get("token")
+        new_password = request.data.get("new_password", "")
+        confirm_password = request.data.get("confirm_password", "")
+
+        if not uid or not token:
+            return Response(
+                {"detail": "Missing reset token parameters."},
+                status=400
+            )
+
+        if not new_password or not confirm_password:
+            return Response(
+                {"detail": "Please enter and confirm your new password."},
+                status=400
+            )
+
+        if new_password != confirm_password:
+            return Response(
+                {"detail": "Passwords do not match."},
+                status=400
+            )
+
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id, is_active=True)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {"detail": "Invalid or expired password reset link."},
+                status=400
+            )
+
+        if not default_token_generator.check_token(user, token):
+            return Response(
+                {"detail": "Password reset link is invalid or has expired. Please request a new one."},
+                status=400
+            )
+
+        # Validate password strength
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            return Response(
+                {"detail": e.messages[0]},
+                status=400
+            )
+
+        # Update user password securely
+        user.set_password(new_password)
+        user.save()
+
+        # Log activity
+        from .activity import log_activity
+        log_activity(
+            event_type="PASSWORD_RESET_COMPLETED",
+            category="AUTH",
+            details=f"User @{user.username} successfully updated their password via reset link.",
+            actor=user,
+            entity_type="User",
+            entity_id=user.id,
+        )
+
+        return Response({
+            "message": "Password updated successfully. You may now sign in with your new password."
+        })
+
+
+

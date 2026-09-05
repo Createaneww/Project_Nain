@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth";
+import { authenticatedFetch } from "./auth";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -32,11 +32,6 @@ export async function fetchActivityLogs(params?: {
   date_range?: string;
   search?: string;
 }): Promise<ActivityLogItem[]> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   const url = new URL(`${API_BASE_URL}/api/admin/activity/`);
   if (params?.category && params.category !== "ALL") {
     url.searchParams.set("category", params.category);
@@ -53,14 +48,14 @@ export async function fetchActivityLogs(params?: {
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await authenticatedFetch(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );
@@ -85,21 +80,16 @@ export async function fetchActivityLogs(params?: {
 export async function fetchActivityLogById(
   id: string | number
 ): Promise<ActivityLogItem> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Authentication token not found. Please log in again.");
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/admin/activity/${id}/`, {
+    response = await authenticatedFetch(`${API_BASE_URL}/api/admin/activity/${id}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error) throw err;
     throw new Error(
       "Network error: Unable to connect to backend server. Please verify backend is running."
     );

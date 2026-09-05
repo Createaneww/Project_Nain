@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef, type DragEvent, type ChangeEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { logout, getStoredUser } from "../../../../services/auth";
 import { fetchPatientById, type Patient } from "../../../../services/patients";
 import {
   createScreening,
@@ -15,7 +14,6 @@ function HealthWorkerNewScreeningPage() {
   const queryPatientId = searchParams.get("patient_id");
   const patientId = routePatientId || queryPatientId;
 
-  const storedUser = getStoredUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Patient loading state
@@ -84,11 +82,6 @@ function HealthWorkerNewScreeningPage() {
       }
     };
   }, [imagePreviewUrl]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatGender = (gender?: string): string => {
     if (!gender) return "—";
@@ -233,475 +226,406 @@ function HealthWorkerNewScreeningPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header / Navigation Bar */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/health-worker/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-100">
-                  Health Worker
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="space-y-6">
+      {/* 1. PAGE HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#3F54DA] tracking-wider uppercase">
+              Clinical Intake
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span className="text-xs text-slate-500 font-medium">
+              Image Acquisition
+            </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to={
-                patient
-                  ? `/health-worker/patients/${patient.id}`
-                  : "/health-worker/patients"
-              }
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              {patient ? "← Back to Patient" : "← Back to Patients"}
-            </Link>
-            {storedUser && (
-              <span className="hidden md:inline-block text-xs font-medium text-slate-500 border-l border-slate-200 pl-3">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0F1F5C] tracking-tight mt-1">
+            New Screening
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Upload patient retinal fundus photograph to begin automated AI-assisted diabetic retinopathy screening.
+          </p>
         </div>
-      </header>
 
-      {/* Main Content Area */}
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* 1. PAGE HEADER & BREADCRUMB */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
+        {patient ? (
           <Link
-            to="/health-worker/dashboard"
-            className="hover:text-blue-600 transition"
+            to={`/health-worker/patients/${patient.id}`}
+            className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 shrink-0"
           >
-            Dashboard
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Patient</span>
           </Link>
-          <span>/</span>
+        ) : (
           <Link
             to="/health-worker/patients"
-            className="hover:text-blue-600 transition"
+            className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 shrink-0"
           >
-            Patients
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Select Patient</span>
           </Link>
-          <span>/</span>
-          {patient ? (
-            <Link
-              to={`/health-worker/patients/${patient.id}`}
-              className="hover:text-blue-600 transition"
-            >
-              Patient Details
-            </Link>
-          ) : (
-            <span>Patient Details</span>
-          )}
-          <span>/</span>
-          <span className="text-slate-800 font-medium">New Screening</span>
-        </nav>
+        )}
+      </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Success Alert */}
+      {successMessage && (
+        <div
+          className="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-sm text-emerald-800 shadow-sm flex items-center gap-3"
+          role="status"
+        >
+          <svg className="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              New Screening
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Upload a fundus image to begin AI-assisted diabetic retinopathy screening.
+            <p className="font-bold text-emerald-900">{successMessage}</p>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              {actionStepText || "Proceeding to screening details..."}
             </p>
           </div>
-          {patient && (
-            <Link
-              to={`/health-worker/patients/${patient.id}`}
-              className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Back to Patient
-            </Link>
-          )}
         </div>
+      )}
 
-        {/* Success Alert */}
-        {successMessage && (
-          <div
-            className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm flex items-center gap-3"
-            role="status"
+      {/* API Error Alert */}
+      {apiError && (
+        <div
+          className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800 shadow-sm flex items-start gap-3"
+          role="alert"
+        >
+          <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="flex-1">
+            <p className="font-bold text-rose-900">
+              Upload could not be completed
+            </p>
+            <p className="mt-0.5 text-xs text-rose-700">{apiError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleUploadAndContinue}
+            disabled={submitting}
+            className="rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition"
           >
-            <span className="text-xl">✅</span>
-            <div>
-              <p className="font-semibold text-emerald-900">{successMessage}</p>
-              <p className="text-xs text-emerald-700 mt-0.5">
-                {actionStepText || "Proceeding to screening details..."}
-              </p>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Loading Patient State */}
+      {loadingPatient && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm animate-pulse">
+            <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
+              <div className="h-16 w-16 rounded-2xl bg-slate-200" />
+              <div className="space-y-2">
+                <div className="h-6 w-48 bg-slate-200 rounded" />
+                <div className="h-4 w-32 bg-slate-100 rounded" />
+              </div>
+            </div>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="h-12 bg-slate-100 rounded-xl" />
+              <div className="h-12 bg-slate-100 rounded-xl" />
+              <div className="h-12 bg-slate-100 rounded-xl" />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* API Error Alert */}
-        {apiError && (
-          <div
-            className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm flex items-start gap-3"
-            role="alert"
-          >
-            <span className="text-xl">⚠️</span>
-            <div className="flex-1">
-              <p className="font-semibold text-red-900">
-                Action could not be completed
-              </p>
-              <p className="mt-0.5 text-xs text-red-700">{apiError}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleUploadAndContinue}
-              disabled={submitting}
-              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition"
+      {/* Missing Patient ID State */}
+      {!loadingPatient && (!patientId || !patientId.trim()) && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-base font-bold text-slate-900">
+            No patient selected
+          </h3>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+            Please select an existing patient or register a new profile before initiating a retinal screening.
+          </p>
+          <div className="mt-6">
+            <Link
+              to="/health-worker/patients"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3F54DA] text-white text-xs font-bold hover:bg-blue-700 transition shadow-sm"
             >
-              Retry
-            </button>
+              <span>Select Patient from Directory</span>
+            </Link>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Loading Patient State */}
-        {loadingPatient && (
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm animate-pulse">
-              <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-                <div className="h-16 w-16 rounded-2xl bg-slate-200"></div>
-                <div className="space-y-2">
-                  <div className="h-6 w-48 bg-slate-200 rounded"></div>
-                  <div className="h-4 w-32 bg-slate-100 rounded"></div>
-                </div>
-              </div>
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="h-12 bg-slate-100 rounded-xl"></div>
-                <div className="h-12 bg-slate-100 rounded-xl"></div>
-                <div className="h-12 bg-slate-100 rounded-xl"></div>
-              </div>
-            </div>
-            <div className="flex items-center justify-center py-4 text-slate-500 text-sm gap-2">
-              <svg
-                className="h-4 w-4 animate-spin text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                ></path>
+      {/* Patient Not Found State */}
+      {!loadingPatient &&
+        patientId &&
+        patientId.trim() &&
+        (isPatientNotFound || (patientError && !patient)) && (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span>Loading patient information...</span>
             </div>
-          </div>
-        )}
-
-        {/* Missing Patient ID State */}
-        {!loadingPatient && (!patientId || !patientId.trim()) && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-2xl text-amber-600 border border-amber-100">
-              ⚠️
-            </div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              No patient selected.
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-              Please select a patient before initiating a new retinal screening.
+            <h3 className="text-base font-bold text-slate-900">
+              Patient record not found
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              No patient record exists with ID #{patientId}.
             </p>
             <div className="mt-6 flex items-center justify-center gap-3">
               <Link
                 to="/health-worker/patients"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3F54DA] text-white text-xs font-bold hover:bg-blue-700 transition shadow-sm"
               >
-                ← Back to Patients
+                <span>Back to Patients</span>
               </Link>
+              <button
+                type="button"
+                onClick={loadPatient}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}
 
-        {/* Patient Not Found State */}
-        {!loadingPatient &&
-          patientId &&
-          patientId.trim() &&
-          (isPatientNotFound || (patientError && !patient)) && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-2xl text-red-600 border border-red-100">
-                👤
+      {/* PATIENT SUMMARY CARD & FUNDUS IMAGE UPLOAD CARD */}
+      {!loadingPatient && patient && (
+        <div className="space-y-6">
+          {/* Patient Summary Card */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Selected Patient Profile
+              </h3>
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-[#3F54DA] border border-blue-100">
+                Active Candidate
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#1D4ED8] to-[#3F54DA] text-2xl font-bold text-white shadow-md shadow-blue-950/20">
+                  {patient.full_name
+                    ? patient.full_name.charAt(0).toUpperCase()
+                    : "P"}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="text-xl font-bold text-[#0F1F5C] tracking-tight">
+                      {patient.full_name || "Unnamed Patient"}
+                    </h3>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200 font-mono">
+                      Patient #{patient.id}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-medium">
+                    <span>{patient.age} years</span>
+                    <span>&bull;</span>
+                    <span>{formatGender(patient.gender)}</span>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Patient not found.
-              </h2>
-              <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-                No patient record exists with ID #{patientId}.
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 text-xs text-slate-500">
+                {patient.phone_number || patient.phone ? (
+                  <div className="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
+                    <span className="block text-slate-400 text-[11px]">Phone</span>
+                    <span className="font-bold text-slate-800 font-mono">
+                      {patient.phone_number || patient.phone}
+                    </span>
+                  </div>
+                ) : null}
+                {patient.email ? (
+                  <div className="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
+                    <span className="block text-slate-400 text-[11px]">Email</span>
+                    <span className="font-bold text-slate-800 truncate block max-w-[140px]">
+                      {patient.email}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {/* FUNDUS IMAGE UPLOAD CARD */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="border-b border-slate-100 pb-4 mb-6">
+              <h3 className="text-base font-bold text-[#0F1F5C]">
+                Upload Retinal Fundus Photograph
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Upload a high-resolution retinal fundus photograph acquired from the examination device.
               </p>
-              <div className="mt-6 flex items-center justify-center gap-3">
-                <Link
-                  to="/health-worker/patients"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                >
-                  ← Back to Patients
-                </Link>
-                <button
-                  type="button"
-                  onClick={loadPatient}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  Retry
-                </button>
-              </div>
-            </div>
-          )}
-
-        {/* 2. PATIENT SUMMARY CARD & 4. FUNDUS IMAGE UPLOAD CARD */}
-        {!loadingPatient && patient && (
-          <div className="space-y-6">
-            {/* 2. PATIENT SUMMARY CARD */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Selected Patient
-                </h2>
-                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-100">
-                  Active Profile
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div className="flex items-center gap-5">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-bold text-white shadow-md shadow-blue-500/20">
-                    {patient.full_name
-                      ? patient.full_name.charAt(0).toUpperCase()
-                      : "P"}
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h3 className="text-xl font-bold text-slate-900">
-                        {patient.full_name || "Unnamed Patient"}
-                      </h3>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200 font-mono">
-                        Patient #{patient.id}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-600 font-medium">
-                      <span>{patient.age} years</span>
-                      <span>•</span>
-                      <span>{formatGender(patient.gender)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:text-right text-xs text-slate-500">
-                  {patient.phone_number || patient.phone ? (
-                    <div className="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
-                      <span className="block text-slate-400">Phone</span>
-                      <span className="font-semibold text-slate-800 font-mono">
-                        {patient.phone_number || patient.phone}
-                      </span>
-                    </div>
-                  ) : null}
-                  {patient.email ? (
-                    <div className="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
-                      <span className="block text-slate-400">Email</span>
-                      <span className="font-semibold text-slate-800 truncate block max-w-[140px]">
-                        {patient.email}
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
             </div>
 
-            {/* 4. FUNDUS IMAGE UPLOAD CARD */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="border-b border-slate-100 pb-4 mb-6">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Upload Fundus Image
-                </h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Upload a clear retinal fundus image for AI analysis.
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/jpg"
+              className="hidden"
+              onChange={handleInputChange}
+              disabled={submitting}
+            />
+
+            {/* Drag and Drop / Upload Dropzone */}
+            {!selectedFile ? (
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+                  isDragging
+                    ? "border-[#3F54DA] bg-blue-50/60 scale-[0.99]"
+                    : "border-slate-300 hover:border-[#3F54DA] hover:bg-slate-50/70 bg-slate-50/40"
+                }`}
+              >
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#3F54DA] border border-blue-100 shadow-sm mb-4">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.75">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-sm font-bold text-slate-800">
+                  Drag and drop fundus scan here, or click to browse
+                </h4>
+                <p className="mt-1 text-xs text-slate-500">
+                  Supports high-resolution JPG, JPEG, or PNG retinal fundus scans (Max 15MB)
                 </p>
+
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-xs font-bold text-[#3F54DA] border border-blue-200 shadow-sm hover:bg-blue-50 transition"
+                  >
+                    <span>Browse File</span>
+                  </button>
+                </div>
               </div>
-
-              {/* Hidden File Input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/jpg"
-                className="hidden"
-                onChange={handleInputChange}
-                disabled={submitting}
-              />
-
-              {/* Drag and Drop / Upload Dropzone */}
-              {!selectedFile ? (
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50/50 scale-[0.99]"
-                      : "border-slate-300 hover:border-blue-400 hover:bg-slate-50/70 bg-slate-50/30"
-                  }`}
-                >
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 text-3xl shadow-sm mb-4">
-                    📷
+            ) : (
+              /* Selected File Preview Container */
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 font-bold text-sm">
+                      ✓
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB &bull; {selectedFile.type || "image"}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-800">
-                    Drag and drop your fundus image here, or browse
-                  </h3>
-                  <p className="mt-1.5 text-xs text-slate-500">
-                    Supports high-resolution JPG, JPEG, or PNG retinal scans (Max 15MB)
-                  </p>
 
-                  <div className="mt-6">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-blue-600 border border-blue-200 shadow-sm hover:bg-blue-50 transition"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={submitting}
+                      className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50"
                     >
-                      <span>Choose Image</span>
-                      <span>📁</span>
+                      Change Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      disabled={submitting}
+                      className="rounded-xl border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>
-              ) : (
-                /* Selected File Preview Container */
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 font-bold text-sm">
-                        ✓
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 truncate max-w-xs sm:max-w-md">
-                          {selectedFile.name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type || "image"}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={submitting}
-                        className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50"
-                      >
-                        Change Image
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        disabled={submitting}
-                        className="rounded-xl border border-red-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                {/* Visual Preview Box */}
+                {imagePreviewUrl && (
+                  <div className="flex justify-center bg-slate-900 rounded-xl overflow-hidden max-h-80 p-2">
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Selected Fundus Retinal Preview"
+                      className="max-h-72 object-contain rounded-lg shadow-md"
+                    />
                   </div>
-
-                  {/* Visual Preview Box */}
-                  {imagePreviewUrl && (
-                    <div className="flex justify-center bg-slate-900 rounded-xl overflow-hidden max-h-80 p-2">
-                      <img
-                        src={imagePreviewUrl}
-                        alt="Selected Fundus Retinal Preview"
-                        className="max-h-72 object-contain rounded-lg shadow-md"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Validation File Error Message */}
-              {fileError && (
-                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 font-medium flex items-center gap-2">
-                  <span>⚠️</span>
-                  <span>{fileError}</span>
-                </div>
-              )}
-
-              {/* 5. UPLOAD ACTION BUTTONS */}
-              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
-                <Link
-                  to={`/health-worker/patients/${patient.id}`}
-                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-100"
-                >
-                  Cancel
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleUploadAndContinue}
-                  disabled={submitting || !selectedFile}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <>
-                      <svg
-                        className="h-4 w-4 animate-spin text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        ></path>
-                      </svg>
-                      <span>{actionStepText || "Processing..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Upload & Continue</span>
-                      <span>→</span>
-                    </>
-                  )}
-                </button>
+                )}
               </div>
+            )}
+
+            {/* Validation File Error Message */}
+            {fileError && (
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 font-medium flex items-center gap-2">
+                <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{fileError}</span>
+              </div>
+            )}
+
+            {/* Upload Action Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+              <Link
+                to={`/health-worker/patients/${patient.id}`}
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
+              >
+                Cancel
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleUploadAndContinue}
+                disabled={submitting || !selectedFile}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#3F54DA] px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#3F54DA]/20 hover:bg-blue-700 hover:shadow-lg hover:shadow-[#3F54DA]/30 transition duration-150 active:scale-[0.98] disabled:bg-blue-300 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <svg
+                      className="h-4 w-4 animate-spin text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
+                    </svg>
+                    <span>{actionStepText || "Processing..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Upload & Continue</span>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }

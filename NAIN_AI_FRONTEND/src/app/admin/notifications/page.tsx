@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../services/auth";
+import { useNavigate } from "react-router-dom";
 import {
   fetchNotifications,
   markNotificationAsRead,
@@ -11,7 +10,6 @@ import { useToast } from "../../../components/ToastProvider";
 
 function AdminNotificationsPage() {
   const navigate = useNavigate();
-  const storedUser = getStoredUser();
   const { success } = useToast();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -42,11 +40,6 @@ function AdminNotificationsPage() {
   useEffect(() => {
     loadNotifications();
   }, [loadNotifications]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "—";
@@ -117,106 +110,53 @@ function AdminNotificationsPage() {
   const getNotifIcon = (type: string) => {
     switch (type) {
       case "REFERRAL_PENDING":
-        return "📋";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>);
       case "CASE_ASSIGNED":
-        return "🩺";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14v1a7 7 0 01-14 0v-1M5 14V6a3 3 0 016 0v1M19 14V6a3 3 0 00-6 0v1M12 21a2 2 0 100-4 2 2 0 000 4z" /></svg>);
       case "CLINICAL_REVIEW_COMPLETED":
-        return "✅";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
       case "REPORT_READY_FOR_COLLECTION":
-        return "📦";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>);
       case "REPORT_COLLECTED":
-        return "🎉";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
       default:
-        return "🔔";
+        return (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Admin Dashboard"
-            >
-              👁️
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100">
-                  Administrator
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
-            </div>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-[#354DAB] uppercase tracking-wider bg-[#E8F2FE] px-2.5 py-0.5 rounded-full">
+              System Dispatch
+            </span>
+            <span className="text-xs text-slate-400 font-medium">
+              {summaryCounts.unread} Unread Notifications
+            </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Dashboard
-            </Link>
-            {storedUser && (
-              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Notifications Center
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Stay updated with important clinical workflow and administrative activities.
+          </p>
         </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500">
-          <Link to="/admin/dashboard" className="hover:text-blue-600 transition">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-800 font-medium">Notifications</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Notifications
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Stay updated with important clinical workflow and case activities.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
-            >
-              ← Dashboard
-            </Link>
-            <button
-              type="button"
-              onClick={loadNotifications}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              🔄 Refresh
-            </button>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={loadNotifications}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#354DAB] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-[#2A3E8C] transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
+      </div>
 
         {/* Error Alert */}
         {error && (
@@ -225,7 +165,7 @@ function AdminNotificationsPage() {
             role="alert"
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">⚠️</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
               <div>
                 <p className="font-semibold text-red-900">
                   Unable to load notifications
@@ -319,7 +259,7 @@ function AdminNotificationsPage() {
               onClick={handleMarkAllRead}
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
             >
-              ✓ Mark All as Read
+              Mark All as Read
             </button>
           )}
         </div>
@@ -328,14 +268,14 @@ function AdminNotificationsPage() {
         <div className="space-y-3">
           {loading && (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-400">
-              <span className="animate-spin inline-block mr-2">🌀</span> Loading notifications...
+              <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg> Loading notifications...
             </div>
           )}
 
           {!loading && filteredNotifications.length === 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-                🔔
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
               </div>
               <h3 className="text-base font-semibold text-slate-800">
                 No notifications found
@@ -398,7 +338,6 @@ function AdminNotificationsPage() {
               </div>
             ))}
         </div>
-      </main>
     </div>
   );
 }

@@ -1,12 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { logout, getStoredUser } from "../../../services/auth";
+import { Link } from "react-router-dom";
 import { fetchPatients, type Patient } from "../../../services/patients";
 
 function HealthWorkerPatientsPage() {
-  const navigate = useNavigate();
-  const storedUser = getStoredUser();
-
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,17 +29,14 @@ function HealthWorkerPatientsPage() {
     loadPatients();
   }, [loadPatients]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
-
-  // Client-side filtering by patient name
+  // Client-side filtering by patient name or ID
   const filteredPatients = useMemo(() => {
     if (!searchTerm.trim()) return patients;
     const query = searchTerm.trim().toLowerCase();
     return patients.filter((patient) =>
-      (patient.full_name || "").toLowerCase().includes(query)
+      (patient.full_name || "").toLowerCase().includes(query) ||
+      String(patient.id).includes(query) ||
+      (patient.phone_number || patient.phone || "").includes(query)
     );
   }, [patients, searchTerm]);
 
@@ -72,334 +65,216 @@ function HealthWorkerPatientsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Top Header / Navigation Bar */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/health-worker/dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
-              title="Return to Dashboard"
-            >
-              👁️
-            </Link>
+    <div className="space-y-6">
+      {/* ════════════════════════════════════════════════════════════════
+          PAGE HEADER & PRIMARY CTA
+      ════════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#3F54DA] tracking-wider uppercase">
+              Directory Management
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span className="text-xs text-slate-500 font-medium">
+              {patients.length} {patients.length === 1 ? "Patient" : "Patients"} Registered
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0F1F5C] tracking-tight mt-1">
+            Patients Directory
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Search, view profiles, and initiate AI-assisted diabetic retinopathy screenings.
+          </p>
+        </div>
+
+        <Link
+          to="/health-worker/patients/new"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#3F54DA] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-[#3F54DA]/20 hover:shadow-lg hover:shadow-[#3F54DA]/30 transition duration-150 active:scale-[0.98] shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Register New Patient</span>
+        </Link>
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════
+          ERROR ALERT
+      ════════════════════════════════════════════════════════════════ */}
+      {error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-rose-800 flex items-start justify-between gap-3 shadow-sm">
+          <div className="flex items-start gap-2.5">
+            <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">NAIN AI</span>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-100">
-                  Health Worker
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Diabetic Retinopathy Screening System
-              </p>
+              <h4 className="text-xs font-bold text-rose-900">Failed to load patients list</h4>
+              <p className="text-xs text-rose-700 mt-0.5">{error}</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/health-worker/dashboard"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition"
-            >
-              ← Back to Dashboard
-            </Link>
-            {storedUser && (
-              <span className="hidden md:inline-block text-xs font-medium text-slate-500 border-l border-slate-200 pl-3">
-                {storedUser.first_name || storedUser.username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-              <Link
-                to="/health-worker/dashboard"
-                className="hover:text-blue-600 transition"
-              >
-                Dashboard
-              </Link>
-              <span>/</span>
-              <span className="text-slate-800 font-medium">Patients</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-              Patients
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              View and manage registered patient records.
-            </p>
-          </div>
-
-          <Link
-            to="/health-worker/patients/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          <button
+            type="button"
+            onClick={loadPatients}
+            className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition"
           >
-            <span>+ Add New Patient</span>
-          </Link>
+            Retry
+          </button>
         </div>
+      )}
 
-        {/* Search Bar & Statistics Bar */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* ════════════════════════════════════════════════════════════════
+          SEARCH & TABLE SECTION
+      ════════════════════════════════════════════════════════════════ */}
+      <section aria-label="Patients Table" className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        {/* Search Bar */}
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-sm">
-              🔍
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </span>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by patient name..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-10 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+              placeholder="Search by patient name, ID, or phone..."
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#3F54DA] focus:ring-4 focus:ring-blue-500/10 outline-none transition duration-150"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
                 title="Clear search"
               >
-                ✕
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             )}
           </div>
 
-          <div className="text-xs text-slate-500 flex items-center gap-2 px-1">
-            {!loading && (
-              <>
-                <span>
-                  Showing{" "}
-                  <strong className="text-slate-800">
-                    {filteredPatients.length}
-                  </strong>{" "}
-                  of{" "}
-                  <strong className="text-slate-800">{patients.length}</strong>{" "}
-                  patient{patients.length === 1 ? "" : "s"}
-                </span>
-              </>
-            )}
+          <div className="text-xs text-slate-500 font-medium self-end sm:self-center">
+            Showing <strong className="text-slate-800">{filteredPatients.length}</strong> of {patients.length}
           </div>
         </div>
 
-        {/* Error State */}
-        {error && !loading && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <span className="text-xl">⚠️</span>
-                <div>
-                  <h3 className="font-semibold text-red-900">
-                    Unable to load patients
-                  </h3>
-                  <p className="mt-0.5 text-sm text-red-700">{error}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={loadPatients}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-200"
-              >
-                Retry
-              </button>
-            </div>
+        {/* Table / List */}
+        {loading ? (
+          <div className="py-16 flex flex-col items-center justify-center text-slate-400">
+            <svg className="w-7 h-7 animate-spin text-[#3F54DA] mb-3" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            <span className="text-xs font-semibold text-slate-500">Loading patients directory...</span>
           </div>
-        )}
-
-        {/* Loading State Skeleton */}
-        {loading && (
-          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-              <div className="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="p-4 flex items-center justify-between animate-pulse"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-lg bg-slate-200"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 w-40 bg-slate-200 rounded"></div>
-                      <div className="h-3 w-24 bg-slate-100 rounded"></div>
-                    </div>
-                  </div>
-                  <div className="h-8 w-16 bg-slate-200 rounded-lg"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Patients Table Display */}
-        {!loading && !error && (
-          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            {filteredPatients.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase text-slate-500 tracking-wider">
-                    <tr>
-                      <th scope="col" className="px-6 py-4">
-                        Patient ID
-                      </th>
-                      <th scope="col" className="px-6 py-4">
-                        Name
-                      </th>
-                      <th scope="col" className="px-6 py-4">
-                        Age
-                      </th>
-                      <th scope="col" className="px-6 py-4">
-                        Gender
-                      </th>
-                      <th scope="col" className="px-6 py-4">
-                        Phone
-                      </th>
-                      <th scope="col" className="px-6 py-4">
-                        Registered Date
-                      </th>
-                      <th scope="col" className="px-6 py-4 text-right">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-normal">
-                    {filteredPatients.map((patient) => {
-                      const phoneNumber =
-                        patient.phone_number || patient.phone || "—";
-
-                      return (
-                        <tr
-                          key={patient.id}
-                          className="hover:bg-slate-50/80 transition-colors"
+        ) : filteredPatients.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/75 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="py-3.5 px-5 sm:px-6">Patient ID</th>
+                  <th className="py-3.5 px-4">Full Name</th>
+                  <th className="py-3.5 px-4">Demographics</th>
+                  <th className="py-3.5 px-4">Contact</th>
+                  <th className="py-3.5 px-4">Registered Date</th>
+                  <th className="py-3.5 px-5 sm:px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                {filteredPatients.map((patient) => (
+                  <tr key={patient.id} className="hover:bg-slate-50/75 transition">
+                    <td className="py-3.5 px-5 sm:px-6 font-mono font-bold text-[#0F1F5C]">
+                      #{patient.id}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <Link
+                        to={`/health-worker/patients/${patient.id}`}
+                        className="font-bold text-slate-900 hover:text-[#3F54DA] transition block"
+                      >
+                        {patient.full_name}
+                      </Link>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-600">
+                      <span className="font-semibold text-slate-800">{patient.age} yrs</span> &bull; {formatGender(patient.gender)}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-slate-600">
+                      {patient.phone_number || patient.phone || "—"}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">
+                      {formatDate(patient.created_at)}
+                    </td>
+                    <td className="py-3.5 px-5 sm:px-6 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <Link
+                          to={`/health-worker/patients/${patient.id}/screening`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-[#3F54DA] border border-blue-200/80 font-bold hover:bg-[#3F54DA] hover:text-white transition duration-150"
                         >
-                          {/* Patient ID */}
-                          <td className="px-6 py-4 font-mono text-xs font-medium text-slate-500">
-                            #{patient.id}
-                          </td>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>Screen</span>
+                        </Link>
 
-                          {/* Patient Name */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700 border border-blue-100">
-                                {patient.full_name
-                                  ? patient.full_name.charAt(0).toUpperCase()
-                                  : "P"}
-                              </div>
-                              <div>
-                                <span className="font-semibold text-slate-900 block">
-                                  {patient.full_name || "Unnamed Patient"}
-                                </span>
-                                {patient.email && (
-                                  <span className="text-xs text-slate-400 block">
-                                    {patient.email}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Age */}
-                          <td className="px-6 py-4 text-slate-700">
-                            {patient.age ? `${patient.age} yrs` : "—"}
-                          </td>
-
-                          {/* Gender */}
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                (patient.gender || "").toUpperCase() === "MALE"
-                                  ? "bg-blue-50 text-blue-700"
-                                  : (patient.gender || "").toUpperCase() ===
-                                    "FEMALE"
-                                  ? "bg-pink-50 text-pink-700"
-                                  : "bg-slate-100 text-slate-700"
-                              }`}
-                            >
-                              {formatGender(patient.gender)}
-                            </span>
-                          </td>
-
-                          {/* Phone */}
-                          <td className="px-6 py-4 font-mono text-xs text-slate-600">
-                            {phoneNumber}
-                          </td>
-
-                          {/* Registered Date */}
-                          <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
-                            {formatDate(patient.created_at)}
-                          </td>
-
-                          {/* Action */}
-                          <td className="px-6 py-4 text-right">
-                            <Link
-                              to={`/health-worker/patients/${patient.id}`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-600 shadow-sm transition hover:bg-blue-50 hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                            >
-                              <span>View</span>
-                              <span>→</span>
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : searchTerm ? (
-              /* Empty Search Results State */
-              <div className="p-12 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-xl text-slate-400">
-                  🔍
-                </div>
-                <h3 className="text-base font-semibold text-slate-800">
-                  No patients match your search
-                </h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  No registered patient found matching &ldquo;{searchTerm}&rdquo;.
-                </p>
+                        <Link
+                          to={`/health-worker/patients/${patient.id}`}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                          title="View Patient Record"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="py-16 px-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#3F54DA] border border-blue-100 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-bold text-slate-800">
+              {searchTerm ? "No matching patients found" : "No registered patients yet"}
+            </h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              {searchTerm
+                ? `No patients match "${searchTerm}". Try adjusting your search query.`
+                : "Register a new patient to begin conducting diabetic retinopathy screenings."}
+            </p>
+            <div className="mt-4">
+              {searchTerm ? (
                 <button
                   type="button"
                   onClick={() => setSearchTerm("")}
-                  className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition"
                 >
-                  Clear Search Filter
+                  Clear Search
                 </button>
-              </div>
-            ) : (
-              /* Completely Empty Patients List State */
-              <div className="p-12 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl text-blue-600">
-                  👥
-                </div>
-                <h3 className="text-base font-semibold text-slate-800">
-                  No patients found
-                </h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  There are no patients registered in the system yet.
-                </p>
+              ) : (
                 <Link
                   to="/health-worker/patients/new"
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#3F54DA] text-white text-xs font-bold hover:bg-blue-700 transition shadow-sm"
                 >
-                  + Add First Patient
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Register First Patient</span>
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
-      </main>
+      </section>
     </div>
   );
 }
