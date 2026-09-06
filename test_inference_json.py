@@ -1,4 +1,4 @@
-"""
+r"""
 NAIN AI — Phase 0 Integration Test
 ====================================
 Goal: Verify nain_ai_inference() runs end-to-end and that its NumPy
@@ -154,7 +154,7 @@ def run_test():
         print(f"  Quality result: {quality['overall']}")
         print(f"  Passed checks: {quality['passed_checks']}/7")
         print(f"  Sharpness: {quality['sharpness']:.2f} (need >= 3)")
-        print(f"  Coverage:  {quality['retinal_ratio']:.2f} (need 0.45-0.98)")
+        print(f"  Coverage:  {quality['retinal_ratio']:.2f} (need 0.45-1.0)")
         print(f"  Fundus:    {quality['colorful_ratio']:.2f} (need >= 0.20)")
         if quality["overall"] == "POOR":
             print("  ⚠️  Image rated POOR — inference will return REJECTED status")

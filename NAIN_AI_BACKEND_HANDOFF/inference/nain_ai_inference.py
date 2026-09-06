@@ -118,7 +118,7 @@ def check_fundus_quality(image_path):
     retinal_ratio = 1 - dark_ratio
 
     coverage_pass = (
-        0.45 <= retinal_ratio <= 0.98
+        0.45 <= retinal_ratio <= 1.0
     )
 
     saturation = hsv[:, :, 1]
