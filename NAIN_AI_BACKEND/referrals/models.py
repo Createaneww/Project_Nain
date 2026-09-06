@@ -62,6 +62,31 @@ class Referral(models.Model):
         except Exception:
             return None
 
+    @property
+    def priority(self):
+        try:
+            pred = (self.report.prediction or "").upper() if self.report else ""
+            if "PROLIFERATIVE" in pred:
+                return "URGENT"
+            elif "SEVERE" in pred:
+                return "HIGH"
+            elif "MODERATE" in pred:
+                return "MEDIUM"
+            elif "MILD" in pred:
+                return "LOW"
+            return "NONE"
+        except Exception:
+            return "NONE"
+
+    @property
+    def available_for_claim(self):
+        try:
+            pred = (self.report.prediction or "").upper() if self.report else ""
+            is_no_dr = any(term in pred for term in ["NO DR", "NORMAL", "NO_DR"]) or pred == "0"
+            return self.assigned_doctor_id is None and self.status == "PENDING" and not is_no_dr
+        except Exception:
+            return False
+
     def __str__(self):
         try:
             return f"Referral #{self.id} - {self.report.screening.patient.full_name}"

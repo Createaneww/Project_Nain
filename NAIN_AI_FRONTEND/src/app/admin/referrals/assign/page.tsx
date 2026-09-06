@@ -108,11 +108,37 @@ function AdminReferralsAssignPage() {
     return map;
   }, [doctors, referrals]);
 
-  // Pending unassigned referrals list
+  // Check if case is No DR
+  const isNoDR = (prediction?: string | null) => {
+    const p = (prediction || "").toUpperCase();
+    return p.includes("NO DR") || p.includes("NORMAL") || p === "0";
+  };
+
+  // Priority rank helper
+  const getPriorityRank = (prediction?: string | null, priority?: string | null): number => {
+    const prio = (priority || "").toUpperCase();
+    const p = (prediction || "").toUpperCase();
+    if (prio === "URGENT" || p.includes("PROLIFERATIVE")) return 1;
+    if (prio === "HIGH" || p.includes("SEVERE")) return 2;
+    if (prio === "MEDIUM" || p.includes("MODERATE")) return 3;
+    if (prio === "LOW" || p.includes("MILD")) return 4;
+    return 5;
+  };
+
+  // Pending unassigned referrals list (excluding No DR cases, ordered by clinical priority)
   const pendingReferrals = useMemo(() => {
-    return referrals.filter(
-      (r) => r.status === "PENDING" || !r.assigned_doctor
-    );
+    return referrals
+      .filter(
+        (r) => (r.status === "PENDING" || !r.assigned_doctor) && !isNoDR(r.prediction)
+      )
+      .sort((a, b) => {
+        const rankA = getPriorityRank(a.prediction, a.priority);
+        const rankB = getPriorityRank(b.prediction, b.priority);
+        if (rankA !== rankB) return rankA - rankB;
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateA - dateB;
+      });
   }, [referrals]);
 
   // Summary counts
@@ -123,27 +149,37 @@ function AdminReferralsAssignPage() {
     return { pending, availableDocs, activeCases };
   }, [pendingReferrals, activeDoctors, referrals]);
 
-  // Priority calculation based on AI prediction
-  const getPriority = (prediction?: string | null) => {
+  // Priority calculation based on AI prediction and priority field
+  const getPriority = (prediction?: string | null, priority?: string | null) => {
+    const prio = (priority || "").toUpperCase();
     const p = (prediction || "").toUpperCase();
-    if (p.includes("PROLIFERATIVE") || p.includes("SEVERE")) {
+    if (prio === "URGENT" || p.includes("PROLIFERATIVE")) {
       return {
-        label: "HIGH",
-        className:
-          "bg-rose-50 text-rose-700 border-rose-200 font-bold",
+        label: "URGENT",
+        className: "bg-red-100 text-red-800 border-red-300 font-black",
       };
     }
-    if (p.includes("MODERATE")) {
+    if (prio === "HIGH" || p.includes("SEVERE")) {
+      return {
+        label: "HIGH",
+        className: "bg-rose-100 text-rose-800 border-rose-300 font-bold",
+      };
+    }
+    if (prio === "MEDIUM" || p.includes("MODERATE")) {
       return {
         label: "MEDIUM",
-        className:
-          "bg-amber-50 text-amber-700 border-amber-200 font-semibold",
+        className: "bg-amber-100 text-amber-800 border-amber-300 font-semibold",
+      };
+    }
+    if (prio === "LOW" || p.includes("MILD")) {
+      return {
+        label: "LOW",
+        className: "bg-blue-100 text-blue-800 border-blue-300 font-semibold",
       };
     }
     return {
-      label: "NORMAL",
-      className:
-        "bg-slate-100 text-slate-700 border-slate-200 font-medium",
+      label: "LOW",
+      className: "bg-slate-100 text-slate-700 border-slate-200 font-medium",
     };
   };
 
@@ -646,7 +682,7 @@ function AdminReferralsAssignPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {pendingReferrals.map((ref) => {
-                    const priority = getPriority(ref.prediction);
+                    const priority = getPriority(ref.prediction, ref.priority);
                     const isSelected = selectedReferralIds.includes(ref.id);
                     const selectedDoc = rowDoctorMap[ref.id] || "";
 

@@ -26,8 +26,13 @@ export interface DoctorDashboardData {
   referrals: {
     total_assigned: number;
     assigned: number;
+    pending_reviews?: number;
+    available?: number;
+    unassigned?: number;
     reviewed: number;
     collected: number;
+    reviewed_today?: number;
+    urgent?: number;
   };
 }
 

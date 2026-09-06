@@ -446,10 +446,35 @@ function AdminReferralDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left 2 Columns: Doctor Assignment & Clinical Review */}
               <div className="lg:col-span-2 space-y-6">
-                {/* 1. DOCTOR ASSIGNMENT / REASSIGNMENT ACTION CARD (FOR PENDING OR ASSIGNED) */}
-                {(referral.status === "PENDING" ||
-                  referral.status === "ASSIGNED" ||
-                  showReassignBox) && (
+                {/* Check if case is No DR */}
+                {(() => {
+                  const pred = (referral.prediction || report?.prediction || "").toUpperCase();
+                  const isNoDR = pred.includes("NO DR") || pred.includes("NORMAL") || pred === "0";
+                  if (isNoDR) {
+                    return (
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 shadow-sm space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                          <svg className="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>No Doctor Assignment Required (Normal / No DR)</span>
+                        </div>
+                        <p className="text-xs text-emerald-800 leading-relaxed">
+                          This patient screening was evaluated as <strong>No Diabetic Retinopathy</strong>. Cases with No DR do not require specialist doctor review or assignment. The AI report is saved and available to Admin and Health Worker for routine collection.
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* 1. DOCTOR ASSIGNMENT / REASSIGNMENT ACTION CARD (FOR PENDING OR ASSIGNED NON-NO DR CASES) */}
+                {(() => {
+                  const pred = (referral.prediction || report?.prediction || "").toUpperCase();
+                  const isNoDR = pred.includes("NO DR") || pred.includes("NORMAL") || pred === "0";
+                  if (isNoDR) return false;
+                  return referral.status === "PENDING" || referral.status === "ASSIGNED" || showReassignBox;
+                })() && (
                   <div className="rounded-2xl border border-indigo-200 bg-indigo-50/40 p-6 sm:p-7 shadow-sm space-y-4">
                     <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
                       <div>

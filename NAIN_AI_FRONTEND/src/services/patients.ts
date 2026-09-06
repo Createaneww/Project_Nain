@@ -31,6 +31,9 @@ export interface ScreeningSummary {
   patient_name: string;
   fundus_image: string | null;
   status: string;
+  prediction?: string | null;
+  confidence?: number | null;
+  report_id?: number | null;
   created_by?: number;
   created_by_name?: string;
   created_at: string;

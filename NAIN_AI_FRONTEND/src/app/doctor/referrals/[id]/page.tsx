@@ -6,6 +6,7 @@ import {
   fetchReferralById,
   reviewReferral,
   assignDoctorToReferral,
+  claimReferral,
   type Referral,
 } from "../../../../services/referrals";
 import {
@@ -108,10 +109,14 @@ function DoctorReferralReviewPage() {
     setClaiming(true);
     setClaimError(null);
     setSubmitError(null);
+    setError(null);
 
     try {
-      const updated = await assignDoctorToReferral(referral.id, Number(storedUser.id));
+      const updated = await claimReferral(referral.id);
       setReferral(updated);
+      setClaimError(null);
+      setSubmitError(null);
+      setError(null);
       try {
         const fresh = await fetchReferralById(referral.id);
         setReferral(fresh);
@@ -135,6 +140,7 @@ function DoctorReferralReviewPage() {
 
     setSubmitError(null);
     setClaimError(null);
+    setError(null);
 
     if (!referral.assigned_doctor) {
       setSubmitError("This referral has not yet been assigned to a doctor.");
@@ -159,6 +165,9 @@ function DoctorReferralReviewPage() {
     try {
       const updated = await reviewReferral(referral.id, doctorNotes.trim());
       setReferral(updated);
+      setSubmitError(null);
+      setClaimError(null);
+      setError(null);
       setSubmitSuccess("Clinical review finalized and saved successfully!");
       try {
         const fresh = await fetchReferralById(referral.id);
@@ -167,6 +176,7 @@ function DoctorReferralReviewPage() {
         // Fallback to updated response
       }
     } catch (err) {
+      setSubmitSuccess(null);
       if (err instanceof Error) {
         setSubmitError(err.message || "Failed to submit doctor review.");
       } else {
@@ -282,6 +292,88 @@ function DoctorReferralReviewPage() {
     referral &&
     isAssignedToCurrentDoctor &&
     referral.status === "ASSIGNED";
+
+  // Active AI Report context (from referral.ai_report or separately fetched report)
+  const displayReport = referral?.ai_report || report;
+
+  // Extract retinal analysis data
+  const rawRetinal =
+    referral?.retinal_analysis ||
+    report?.retinal_analysis ||
+    referral?.ai_report?.retinal_analysis;
+
+  const detectedStage =
+    referral?.ai_report?.detected_stage ||
+    report?.detected_stage ||
+    (typeof rawRetinal === "object" && !Array.isArray(rawRetinal) && rawRetinal !== null
+      ? ((rawRetinal.stage as string) || (rawRetinal.detected_stage as string))
+      : null) ||
+    referral?.prediction ||
+    report?.prediction ||
+    "—";
+
+  // Key Features & Findings
+  const extractFeatures = (): string[] => {
+    if (
+      referral?.ai_report?.retinal_findings &&
+      Array.isArray(referral.ai_report.retinal_findings) &&
+      referral.ai_report.retinal_findings.length > 0
+    ) {
+      return referral.ai_report.retinal_findings;
+    }
+    if (
+      referral?.ai_report?.key_features &&
+      Array.isArray(referral.ai_report.key_features) &&
+      referral.ai_report.key_features.length > 0
+    ) {
+      return referral.ai_report.key_features;
+    }
+    if (
+      report?.retinal_findings &&
+      Array.isArray(report.retinal_findings) &&
+      report.retinal_findings.length > 0
+    ) {
+      return report.retinal_findings;
+    }
+    if (
+      report?.key_features &&
+      Array.isArray(report.key_features) &&
+      report.key_features.length > 0
+    ) {
+      return report.key_features;
+    }
+    if (typeof rawRetinal === "object" && rawRetinal !== null) {
+      if (Array.isArray(rawRetinal)) {
+        return rawRetinal as string[];
+      }
+      const rawObj = rawRetinal as Record<string, unknown>;
+      if (Array.isArray(rawObj.features)) return rawObj.features as string[];
+      if (Array.isArray(rawObj.findings)) return rawObj.findings as string[];
+      if (Array.isArray(rawObj.key_features)) return rawObj.key_features as string[];
+    }
+    return [];
+  };
+
+  const retinalFindings = extractFeatures();
+
+  // Additional observations (notes or extra items)
+  const additionalObservations: string[] = [];
+  if (
+    referral?.ai_report?.observations &&
+    Array.isArray(referral.ai_report.observations)
+  ) {
+    referral.ai_report.observations.forEach((obs) => {
+      if (!retinalFindings.includes(obs)) {
+        additionalObservations.push(obs);
+      }
+    });
+  } else if (report?.observations && Array.isArray(report.observations)) {
+    report.observations.forEach((obs) => {
+      if (!retinalFindings.includes(obs)) {
+        additionalObservations.push(obs);
+      }
+    });
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -407,7 +499,7 @@ function DoctorReferralReviewPage() {
       )}
 
       {/* Submit Error Alert */}
-      {submitError && (
+      {!submitSuccess && submitError && (
         <div
           className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 shadow-sm flex items-start gap-3"
           role="alert"
@@ -530,7 +622,7 @@ function DoctorReferralReviewPage() {
           {/* ───────────────────────────────────────────────────────────
               2. RETINAL IMAGING & EXPLAINABLE AI HEATMAP
           ─────────────────────────────────────────────────────────── */}
-          {report && (
+          {displayReport && (
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
               <div className="border-b border-slate-100 pb-4 mb-6 flex items-center justify-between">
                 <div>
@@ -556,9 +648,9 @@ function DoctorReferralReviewPage() {
                     <span className="text-[10px] text-slate-400 font-mono">Fundus RGB</span>
                   </div>
                   <div className="relative aspect-square w-full rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden border border-slate-800">
-                    {report.original_image_url ? (
+                    {(displayReport.original_image_url || displayReport.fundus_image) ? (
                       <img
-                        src={resolveImageUrl(report.original_image_url) || ""}
+                        src={resolveImageUrl(displayReport.original_image_url || displayReport.fundus_image) || ""}
                         alt="Input Retinal Scan"
                         className="h-full w-full object-contain"
                       />
@@ -577,9 +669,9 @@ function DoctorReferralReviewPage() {
                     <span className="text-[10px] text-slate-400 font-mono">Explainable AI</span>
                   </div>
                   <div className="relative aspect-square w-full rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden border border-slate-800">
-                    {report.gradcam_url ? (
+                    {(displayReport.gradcam_url || displayReport.gradcam_image) ? (
                       <img
-                        src={resolveImageUrl(report.gradcam_url) || ""}
+                        src={resolveImageUrl(displayReport.gradcam_url || displayReport.gradcam_image) || ""}
                         alt="Grad-CAM Overlay"
                         className="h-full w-full object-contain"
                       />
@@ -591,13 +683,13 @@ function DoctorReferralReviewPage() {
               </div>
 
               {/* Probabilities Distribution Breakdown */}
-              {report.probabilities && (
+              {displayReport.probabilities && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
                     Stage Probability Distribution
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-                    {Object.entries(report.probabilities).map(([stage, prob]) => {
+                    {Object.entries(displayReport.probabilities).map(([stage, prob]) => {
                       const numProb = typeof prob === "number" ? prob : parseFloat(String(prob));
                       const isPredicted = referral.prediction?.toUpperCase().includes(stage.toUpperCase());
 
@@ -626,7 +718,119 @@ function DoctorReferralReviewPage() {
           )}
 
           {/* ───────────────────────────────────────────────────────────
-              3. DOCTOR CLINICAL EVALUATION & PRESCRIPTION
+              3. RETINAL ANALYSIS & FINDINGS (AI CLINICAL EVIDENCE)
+          ─────────────────────────────────────────────────────────── */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="border-b border-slate-100 pb-4 mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-[#0A194E]">
+                  Retinal Analysis &amp; Findings
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Deep-learning microvascular lesion detection and biomarker observations from AI Clinical Report.
+                </p>
+              </div>
+              <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 border border-indigo-200/70 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                AI Generated Findings
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* 1. Detected Stage Card */}
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-5 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Detected Stage
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-extrabold text-[#0A194E]">
+                    {detectedStage}
+                  </span>
+                </div>
+                <div>
+                  {getPredictionBadge(detectedStage)}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-200/60">
+                  Classified severity based on neural feature extraction of fundus microvasculature.
+                </p>
+              </div>
+
+              {/* 2. Key Features & Observations */}
+              <div className="md:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/70 p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Key Features &amp; Observations
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    {retinalFindings.length} {retinalFindings.length === 1 ? "Biomarker" : "Biomarkers"} Identified
+                  </span>
+                </div>
+
+                {retinalFindings.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {retinalFindings.map((finding, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-blue-100 bg-white p-3 shadow-xs flex items-center gap-3 hover:border-[#354DAB]/40 transition"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#354DAB] flex items-center justify-center shrink-0 border border-blue-100">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {finding}
+                          </p>
+                          <span className="text-[10px] font-medium text-emerald-600 flex items-center gap-1 mt-0.5">
+                            <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
+                            Detected in scan
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-center">
+                    <p className="text-xs font-medium text-slate-500">
+                      No characteristic DR lesions or microvascular abnormalities flagged.
+                    </p>
+                  </div>
+                )}
+
+                {/* Additional observations if present */}
+                {additionalObservations.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-200/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Additional Clinical Observations
+                    </span>
+                    <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
+                      {additionalObservations.map((obs, idx) => (
+                        <li key={idx}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Read-Only Specialist Context Notice */}
+            <div className="mt-5 rounded-xl border border-slate-200/60 bg-blue-50/40 p-3.5 flex items-start gap-3">
+              <div className="w-5 h-5 rounded-md bg-blue-100 text-[#354DAB] flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                <strong className="text-slate-800 font-semibold">Specialist Review Context (Read-Only):</strong>{" "}
+                These automated retinal biomarker findings are compiled directly from the AI Clinical Report to provide complete diagnostic context. The examining doctor must independently evaluate the patient's retinal evidence, formulate the clinical diagnosis, and submit official recommendations below.
+              </p>
+            </div>
+          </div>
+
+          {/* ───────────────────────────────────────────────────────────
+              4. DOCTOR CLINICAL EVALUATION & PRESCRIPTION
           ─────────────────────────────────────────────────────────── */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
             <div className="border-b border-slate-100 pb-4 mb-6">

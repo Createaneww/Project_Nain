@@ -339,11 +339,23 @@ function HealthWorkerPatientDetailPage() {
                         {sc.status || "CREATED"}
                       </span>
 
+                      {sc.status === "COMPLETED" && sc.report_id && (
+                        <Link
+                          to={`/health-worker/reports/${sc.report_id}`}
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200/80 hover:bg-emerald-600 hover:text-white transition"
+                        >
+                          <span>Report</span>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </Link>
+                      )}
+
                       <Link
                         to={`/health-worker/screenings/${sc.id}`}
                         className="text-xs font-bold text-[#3F54DA] hover:underline"
                       >
-                        View &rarr;
+                        Screening &rarr;
                       </Link>
                     </div>
                   </div>

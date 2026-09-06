@@ -34,7 +34,7 @@ class ScreeningListCreateView(generics.ListCreateAPIView):
     allowed_roles = ["HEALTH_WORKER", "ADMIN"]
 
     def get_queryset(self):
-        queryset = Screening.objects.all().order_by("-created_at")
+        queryset = Screening.objects.select_related("patient", "created_by", "report").all().order_by("-created_at")
         patient_id = self.request.query_params.get("patient_id")
         created_by = self.request.query_params.get("created_by")
         date = self.request.query_params.get("date")
@@ -73,7 +73,7 @@ class ScreeningListCreateView(generics.ListCreateAPIView):
         )
 
 class ScreeningDetailView(generics.RetrieveAPIView):
-    queryset = Screening.objects.all()
+    queryset = Screening.objects.select_related("patient", "created_by", "report").all()
     serializer_class = ScreeningSerializer
     permission_classes = [IsAuthenticated, HasRole]
 
@@ -234,10 +234,21 @@ class ScreeningAnalyzeView(APIView):
                     }
                 )
 
-                # Maintain referral workflow idempotently
-                referral, ref_created = Referral.objects.get_or_create(
-                    report=report
-                )
+                # Determine clinical referral requirement: No DR does NOT create a referral
+                is_no_dr = any(
+                    term in prediction_str.upper() for term in ["NO DR", "NORMAL", "NO_DR"]
+                ) or prediction_str.strip() == "0"
+
+                referral = None
+                ref_created = False
+                if not is_no_dr:
+                    # Clinical DR case: Maintain referral workflow idempotently
+                    referral, ref_created = Referral.objects.get_or_create(
+                        report=report
+                    )
+                else:
+                    # No DR case: Exclude from referral workflow; remove any prior stale referral
+                    Referral.objects.filter(report=report).delete()
 
             # Activity logging and notifications outside atomic block
             try:
@@ -253,7 +264,7 @@ class ScreeningAnalyzeView(APIView):
                     patient_id=screening.patient.id if screening.patient else None,
                     patient_name=patient_name,
                 )
-                if ref_created:
+                if ref_created and referral is not None:
                     log_activity(
                         event_type="REFERRAL_CREATED",
                         category="REFERRAL",
@@ -264,7 +275,7 @@ class ScreeningAnalyzeView(APIView):
                         patient_id=screening.patient.id if screening.patient else None,
                         patient_name=patient_name,
                     )
-                    from accounts.notifications import notify_admins
+                    from accounts.notifications import notify_admins, create_notification
                     notify_admins(
                         type="REFERRAL_PENDING",
                         title="New Referral Pending",
@@ -273,6 +284,21 @@ class ScreeningAnalyzeView(APIView):
                         related_entity_id=referral.id,
                         action_url=f"/admin/referrals/{referral.id}",
                     )
+                    try:
+                        from accounts.models import User
+                        doctors = User.objects.filter(role=User.Role.DOCTOR, is_active=True)
+                        for doc in doctors:
+                            create_notification(
+                                recipient=doc,
+                                type="NEW_REFERRAL_AVAILABLE",
+                                title="New Case Available to Claim",
+                                message=f"A new {screening.prediction} DR case for {patient_name or f'Patient #{screening.patient_id}'} is available to claim.",
+                                related_entity_type="Referral",
+                                related_entity_id=referral.id,
+                                action_url=f"/doctor/dashboard",
+                            )
+                    except Exception:
+                        pass
             except Exception:
                 pass
 

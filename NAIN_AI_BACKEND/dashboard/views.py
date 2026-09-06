@@ -57,7 +57,35 @@ class DoctorDashboardView(APIView):
 
     def get(self, request):
         doctor = request.user
-        doctor_referrals = Referral.objects.filter(assigned_doctor=doctor)
+        NO_DR_Q = (
+            Q(report__prediction__icontains="no dr")
+            | Q(report__prediction__icontains="normal")
+            | Q(report__prediction__isnull=True)
+            | Q(report__prediction="")
+        )
+        doctor_referrals = Referral.objects.filter(
+            assigned_doctor=doctor
+        ).exclude(NO_DR_Q)
+
+        today = timezone.localdate()
+
+        assigned_active = doctor_referrals.filter(status="ASSIGNED")
+        pending_count = assigned_active.count()
+        reviewed_count = doctor_referrals.filter(status="REVIEWED").count()
+        collected_count = doctor_referrals.filter(status="COLLECTED").count()
+        reviewed_today = doctor_referrals.filter(
+            status__in=["REVIEWED", "COLLECTED"],
+            reviewed_at__date=today
+        ).count()
+        urgent_count = assigned_active.filter(
+            Q(report__prediction__icontains="severe") | Q(report__prediction__icontains="proliferative")
+        ).count()
+
+        available_referrals = Referral.objects.filter(
+            assigned_doctor__isnull=True,
+            status="PENDING",
+        ).exclude(NO_DR_Q)
+        available_count = available_referrals.count()
 
         data = {
             "doctor": {
@@ -67,9 +95,14 @@ class DoctorDashboardView(APIView):
             },
             "referrals": {
                 "total_assigned": doctor_referrals.count(),
-                "assigned": doctor_referrals.filter(status="ASSIGNED").count(),
-                "reviewed": doctor_referrals.filter(status="REVIEWED").count(),
-                "collected": doctor_referrals.filter(status="COLLECTED").count(),
+                "assigned": pending_count,
+                "pending_reviews": pending_count,
+                "available": available_count,
+                "unassigned": available_count,
+                "reviewed": reviewed_count,
+                "collected": collected_count,
+                "reviewed_today": reviewed_today,
+                "urgent": urgent_count,
             },
         }
         return Response(data, status=status.HTTP_200_OK)

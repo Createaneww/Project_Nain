@@ -9,6 +9,9 @@ export interface Screening {
   patient_name?: string;
   fundus_image?: string | null;
   status: "CREATED" | "IMAGE_UPLOADED" | "PROCESSING" | "COMPLETED" | "FAILED" | string;
+  prediction?: string | null;
+  confidence?: number | null;
+  report_id?: number | null;
   created_by?: number;
   created_by_name?: string;
   created_at: string;

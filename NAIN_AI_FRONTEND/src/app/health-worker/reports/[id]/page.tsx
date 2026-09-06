@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   fetchReportById,
+  fetchReportByScreeningId,
   resolveImageUrl,
   type Report,
 } from "../../../../services/reports";
@@ -30,6 +31,18 @@ function HealthWorkerReportPage() {
       const data = await fetchReportById(id);
       setReport(data);
     } catch (err) {
+      // If report not found by report ID, check if id was a screening ID and resolve via real database relationship
+      try {
+        const resolvedReport = await fetchReportByScreeningId(id);
+        if (resolvedReport && resolvedReport.id) {
+          setReport(resolvedReport);
+          window.history.replaceState(null, "", `/health-worker/reports/${resolvedReport.id}`);
+          return;
+        }
+      } catch {
+        // Not a screening ID with report either
+      }
+
       if (err instanceof Error) {
         if (
           err.message.toLowerCase().includes("not found") ||

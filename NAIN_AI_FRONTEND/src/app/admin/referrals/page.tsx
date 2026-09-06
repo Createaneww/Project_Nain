@@ -65,23 +65,45 @@ function AdminReferralsPage() {
     return { total, pending, assigned, reviewed, collected };
   }, [referrals]);
 
+  // Helper for priority ranking
+  const getPriorityRank = (prediction?: string | null, priority?: string | null): number => {
+    const prio = (priority || "").toUpperCase();
+    const p = (prediction || "").toUpperCase();
+    if (prio === "URGENT" || p.includes("PROLIFERATIVE")) return 1;
+    if (prio === "HIGH" || p.includes("SEVERE")) return 2;
+    if (prio === "MEDIUM" || p.includes("MODERATE")) return 3;
+    if (prio === "LOW" || p.includes("MILD")) return 4;
+    return 5;
+  };
+
   // Filtered referrals
   const filteredReferrals = useMemo(() => {
-    return referrals.filter((r) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        (r.patient_name || "").toLowerCase().includes(q) ||
-        (r.assigned_doctor_name || "").toLowerCase().includes(q) ||
-        String(r.id).includes(q) ||
-        String(r.patient_id).includes(q);
+    return referrals
+      .filter((r) => {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesSearch =
+          !q ||
+          (r.patient_name || "").toLowerCase().includes(q) ||
+          (r.assigned_doctor_name || "").toLowerCase().includes(q) ||
+          String(r.id).includes(q) ||
+          String(r.patient_id).includes(q) ||
+          (r.prediction || "").toLowerCase().includes(q) ||
+          (r.priority || "").toLowerCase().includes(q);
 
-      const matchesStatus =
-        statusFilter === "ALL" ||
-        r.status.toUpperCase() === statusFilter.toUpperCase();
+        const matchesStatus =
+          statusFilter === "ALL" ||
+          r.status.toUpperCase() === statusFilter.toUpperCase();
 
-      return matchesSearch && matchesStatus;
-    });
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        const rankA = getPriorityRank(a.prediction, a.priority);
+        const rankB = getPriorityRank(b.prediction, b.priority);
+        if (rankA !== rankB) return rankA - rankB;
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateA - dateB;
+      });
   }, [referrals, searchQuery, statusFilter]);
 
   // Status badge styling
@@ -164,6 +186,48 @@ function AdminReferralsPage() {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
         {prediction}
+      </span>
+    );
+  };
+
+  // Clinical Priority badge
+  const getPriorityBadge = (prediction?: string | null, priority?: string | null) => {
+    const p = (priority || prediction || "").toUpperCase();
+    if (p.includes("PROLIFERATIVE") || p === "URGENT") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-black text-red-800 border border-red-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+          URGENT
+        </span>
+      );
+    }
+    if (p.includes("SEVERE") || p === "HIGH") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800 border border-rose-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+          HIGH
+        </span>
+      );
+    }
+    if (p.includes("MODERATE") || p === "MEDIUM") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 border border-amber-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          MEDIUM
+        </span>
+      );
+    }
+    if (p.includes("MILD") || p === "LOW") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800 border border-blue-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          LOW
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
+        —
       </span>
     );
   };
@@ -438,6 +502,7 @@ function AdminReferralsPage() {
                   <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th className="py-3.5 px-4 sm:px-6">Referral ID</th>
                     <th className="py-3.5 px-4 sm:px-6">Patient</th>
+                    <th className="py-3.5 px-4 sm:px-6">Priority</th>
                     <th className="py-3.5 px-4 sm:px-6">AI Prediction</th>
                     <th className="py-3.5 px-4 sm:px-6">Assigned Doctor</th>
                     <th className="py-3.5 px-4 sm:px-6">Status</th>
@@ -478,6 +543,11 @@ function AdminReferralsPage() {
                             </p>
                           )}
                         </div>
+                      </td>
+
+                      {/* Priority */}
+                      <td className="py-4 px-4 sm:px-6">
+                        {getPriorityBadge(ref.prediction, ref.priority)}
                       </td>
 
                       {/* AI Prediction */}

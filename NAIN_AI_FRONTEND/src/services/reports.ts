@@ -24,7 +24,11 @@ export interface QualityData {
 
 export interface RetinalAnalysis {
   stage?: string;
+  detected_stage?: string;
   features?: string[];
+  findings?: string[];
+  key_features?: string[];
+  observations?: string[];
   [key: string]: unknown;
 }
 
@@ -37,6 +41,10 @@ export interface Report {
   quality_data?: QualityData;
   probabilities?: Record<string, number>;
   retinal_analysis?: RetinalAnalysis | string[];
+  detected_stage?: string;
+  retinal_findings?: string[];
+  key_features?: string[];
+  observations?: string[];
   original_image_url?: string;
   gradcam_url?: string;
   generated_at?: string;

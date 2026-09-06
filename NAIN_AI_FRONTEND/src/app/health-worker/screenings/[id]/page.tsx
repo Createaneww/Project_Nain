@@ -42,8 +42,10 @@ function HealthWorkerScreeningDetailPage() {
         }
       }
 
-      // If status is completed, fetch associated report ID
-      if (screeningData.status === "COMPLETED") {
+      // Resolve associated report ID from screeningData or backend relationship
+      if (screeningData.report_id) {
+        setAssociatedReportId(screeningData.report_id);
+      } else if (screeningData.status === "COMPLETED") {
         try {
           const rep = await fetchReportByScreeningId(screeningData.id);
           if (rep && rep.id) {
@@ -153,21 +155,28 @@ function HealthWorkerScreeningDetailPage() {
   // Navigate to AI Report
   const handleViewReport = async () => {
     if (!screening) return;
-    if (associatedReportId) {
-      navigate(`/health-worker/reports/${associatedReportId}`);
+    const reportId = associatedReportId || screening.report_id;
+    if (reportId) {
+      navigate(`/health-worker/reports/${reportId}`);
       return;
     }
 
+    // Attempt resolving from real database relationship: Screening -> Report -> Report.id
     try {
       const rep = await fetchReportByScreeningId(screening.id);
       if (rep && rep.id) {
+        setAssociatedReportId(rep.id);
         navigate(`/health-worker/reports/${rep.id}`);
-      } else {
-        navigate(`/health-worker/reports/${screening.id}`);
+        return;
       }
     } catch {
-      navigate(`/health-worker/reports/${screening.id}`);
+      // Report not available yet
     }
+
+    // Do NOT navigate to a fake /reports/{screening.id} URL
+    setAnalysisError(
+      "No AI report has been generated for this screening yet. Please click 'Run AI Analysis'."
+    );
   };
 
   const getStatusBadge = (status?: string) => {

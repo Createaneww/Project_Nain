@@ -12,6 +12,7 @@ class ScreeningSerializer(serializers.ModelSerializer):
         source="created_by.username",
         read_only=True
     )
+    report_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Screening
@@ -21,6 +22,9 @@ class ScreeningSerializer(serializers.ModelSerializer):
             "patient_name",
             "fundus_image",
             "status",
+            "prediction",
+            "confidence",
+            "report_id",
             "created_by",
             "created_by_name",
             "created_at",
@@ -31,8 +35,17 @@ class ScreeningSerializer(serializers.ModelSerializer):
             "id",
             "fundus_image",
             "status",
+            "prediction",
+            "confidence",
+            "report_id",
             "created_by",
             "created_by_name",
             "created_at",
             "updated_at",
         ]
+
+    def get_report_id(self, obj):
+        try:
+            return obj.report.id
+        except (AttributeError, Exception):
+            return None

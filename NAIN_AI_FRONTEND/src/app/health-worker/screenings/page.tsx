@@ -303,9 +303,9 @@ function HealthWorkerScreeningsPage() {
                     </td>
                     <td className="py-3.5 px-5 sm:px-6 text-right">
                       <div className="inline-flex items-center gap-2">
-                        {sc.status === "COMPLETED" ? (
+                        {sc.status === "COMPLETED" && sc.report_id ? (
                           <Link
-                            to={`/health-worker/reports/${sc.id}`}
+                            to={`/health-worker/reports/${sc.report_id}`}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-bold hover:bg-emerald-600 hover:text-white transition duration-150"
                           >
                             <span>Report</span>
@@ -318,7 +318,7 @@ function HealthWorkerScreeningsPage() {
                             to={`/health-worker/screenings/${sc.id}`}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-[#3F54DA] border border-blue-200/80 font-bold hover:bg-[#3F54DA] hover:text-white transition duration-150"
                           >
-                            <span>Open</span>
+                            <span>{sc.status === "COMPLETED" ? "Review" : "Open"}</span>
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
